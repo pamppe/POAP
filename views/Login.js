@@ -1,5 +1,10 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {KeyboardAvoidingView, TouchableOpacity, Keyboard} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  TouchableOpacity,
+  Keyboard,
+  Platform,
+} from 'react-native';
 import PropTypes from 'prop-types';
 import {MainContext} from '../contexts/MainContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';

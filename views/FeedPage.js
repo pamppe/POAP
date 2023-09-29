@@ -1,13 +1,28 @@
 import React from 'react';
-import {View, Text} from 'react-native';
+import {Platform, SafeAreaView, StyleSheet} from 'react-native';
+import List from '../components/List';
+import PropTypes from 'prop-types';
 
-function FeedPage() {
+const Home = ({navigation}) => {
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Welcome to the Feed!</Text>
-      {/* Here you'd map through your videos and render a video component */}
-    </View>
+    <SafeAreaView style={styles.container}>
+      <List navigation={navigation} />
+    </SafeAreaView>
   );
-}
+};
 
-export default FeedPage;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? 30 : 0,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+Home.propTypes = {
+  navigation: PropTypes.object,
+};
+
+export default Home;
