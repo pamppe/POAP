@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   Keyboard,
   Platform,
+  View, Text
 } from 'react-native';
 import PropTypes from 'prop-types';
 import {MainContext} from '../contexts/MainContext';
@@ -11,7 +12,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useUser} from '../hooks/ApiHooks';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
-import {Button} from '@rneui/themed';
 
 const Login = ({navigation}) => {
   // props is needed for navigation
@@ -52,13 +52,24 @@ const Login = ({navigation}) => {
         ) : (
           <LoginForm />
         )}
-        <Button
-          onPress={() => {
-            setToggleRegister(!toggleRegister);
-          }}
-        >
-          {toggleRegister ? 'login' : 'register'}
-        </Button>
+        <View style={{ flexDirection: 'row', marginTop: 20 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: toggleRegister ? 'lightgray' : '#007BFF',
+              padding: 10,
+              borderRadius: 5,
+              marginRight: 10,
+              marginLeft: 145,
+            }}
+            onPress={() => {
+              setToggleRegister(!toggleRegister);
+            }}
+          >
+            <Text style={{ color: toggleRegister ? 'black' : 'white' }}>
+              {toggleRegister ? 'Login' : 'Register'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </TouchableOpacity>
   );
