@@ -3,9 +3,12 @@ import ListItem from './ListItem';
 import {useMedia} from '../hooks/ApiHooks';
 import PropTypes from 'prop-types';
 import {useContext, useRef, useState, useCallback} from 'react';
-import {MainContext} from '../contexts/MainContext';
+import {MainContext, height} from '../contexts/MainContext';
 
-const ScreenHeight = Dimensions.get('window').height;
+// screen Height
+const ScreenHeight = Dimensions.get('window').height - 79;
+// screen height recudec by bottom tab bar height
+//const ScreenHeightMinusTabBar = ScreenHeight - height;
 
 const List = ({navigation, myFilesOnly}) => {
   const {update, user} = useContext(MainContext);
@@ -31,10 +34,10 @@ const List = ({navigation, myFilesOnly}) => {
     }
   });
 
-  /* const changeHandler = ({ viewableItems, changed }) => {
+  /*  const changeHandler = ({ viewableItems, changed }) => {
     console.log("Visible items are", viewableItems);
     console.log("Changed in this iteration", changed);
-  } */
+  }  */
 
   return (
     <FlatList
@@ -52,7 +55,7 @@ const List = ({navigation, myFilesOnly}) => {
       keyExtractor={(item) =>
         item.id ? item.id.toString() : Math.random().toString()
       }
-      snapToInterval={ScreenHeight - 180}
+      snapToInterval={ScreenHeight}
       snapToAlignment="start"
       decelerationRate="fast"
       viewabilityConfig={viewConfigRef.current}

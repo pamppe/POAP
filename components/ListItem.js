@@ -14,6 +14,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useUser} from '../hooks/ApiHooks';
 import {MainContext} from '../contexts/MainContext';
 import {Video} from 'expo-av';
+import {FontAwesome} from '@expo/vector-icons';
+import avatarImage from '../assets/avatar.png';
 
 const ListItem = ({singleMedia, navigation, userId}) => {
   const [owner, setOwner] = useState({});
@@ -27,6 +29,7 @@ const ListItem = ({singleMedia, navigation, userId}) => {
     setIsPlaying(!isPlaying);
   };
 
+  // fetch owner info
   const fetchOwner = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -37,10 +40,14 @@ const ListItem = ({singleMedia, navigation, userId}) => {
     }
   };
 
+  // window height - header height
   const screenHeight = Dimensions.get('window').height - height;
+  // window height + header height
+  // const intervalHeight = screenHeight + height;
+  // window width
   const screenWidth = Dimensions.get('window').width;
 
-  console.log('singleMedia', singleMedia);
+  // console.log('singleMedia', singleMedia);
 
   useEffect(() => {
     fetchOwner();
@@ -49,7 +56,7 @@ const ListItem = ({singleMedia, navigation, userId}) => {
   useEffect(() => {
     if (videoRef.current) {
       // currentVideo.pause();
-      //setCurrentVideo(videoRef.current);
+      // setCurrentVideo(videoRef.current);
       if (isPlaying) {
         videoRef.current.playAsync();
       } else {
@@ -61,9 +68,10 @@ const ListItem = ({singleMedia, navigation, userId}) => {
     <ScrollView
       style={styles.container}
       horizontal={false}
-      decelerationRate={0}
-      snapToInterval={screenHeight}
+      decelerationRate={'fast'}
+      snapToInterval={Dimensions.get('window').height + height}
       snapToAlignment={'center'}
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.mediaContainer}>
         {singleMedia.media_type === 'image' ? (
@@ -102,6 +110,24 @@ const ListItem = ({singleMedia, navigation, userId}) => {
             {singleMedia.description}
           </Text>
         </View>
+        <View style={styles.verticalNav}>
+          <TouchableOpacity style={styles.navItem}>
+            <Image style={styles.avatar} source={avatarImage} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="heart-o" size={30} color="white" />
+            {/* Number of likes can be added here */}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="comment-o" size={30} color="white" />
+            {/* Number of comments can be added here */}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="whatsapp" size={30} color="white" />
+            {/* Number of comments can be added here */}
+          </TouchableOpacity>
+          {/* Add more items as needed */}
+        </View>
       </View>
     </ScrollView>
   );
@@ -137,6 +163,22 @@ const styles = StyleSheet.create({
   description: {
     color: 'white',
     fontSize: 16,
+  },
+  verticalNav: {
+    position: 'absolute',
+    right: 10,
+    bottom: 200, // Adjust as per your requirement
+    alignItems: 'center',
+  },
+  navItem: {
+    marginBottom: 30,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
 
