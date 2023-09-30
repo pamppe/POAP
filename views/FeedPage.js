@@ -1,23 +1,30 @@
-import React from 'react';
-import {Platform, SafeAreaView, StyleSheet} from 'react-native';
+import React, {useContext} from 'react';
+import {Platform, StatusBar, StyleSheet} from 'react-native';
 import List from '../components/List';
 import PropTypes from 'prop-types';
+import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
+import {MainContext} from '../contexts/MainContext';
 
 const Home = ({navigation}) => {
+  const {setHeight} = useContext(MainContext);
+  const tabBarHeight = useBottomTabBarHeight();
+  setHeight(tabBarHeight);
   return (
-    <SafeAreaView style={styles.container}>
+    <>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
       <List navigation={navigation} />
-    </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? 30 : 0,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

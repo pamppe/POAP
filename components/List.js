@@ -1,24 +1,62 @@
-import {FlatList} from 'react-native';
+import {FlatList, Dimensions} from 'react-native';
 import ListItem from './ListItem';
 import {useMedia} from '../hooks/ApiHooks';
 import PropTypes from 'prop-types';
-import {useContext} from 'react';
+import {useContext, useRef, useState, useCallback} from 'react';
 import {MainContext} from '../contexts/MainContext';
+
+const ScreenHeight = Dimensions.get('window').height;
 
 const List = ({navigation, myFilesOnly}) => {
   const {update, user} = useContext(MainContext);
   const {mediaArray} = useMedia(update, myFilesOnly);
+  const [playingIndex, setPlayingIndex] = useState(-1);
+
+  const handlePlayVideo = useCallback(
+    (index) => {
+      if (playingIndex !== index) {
+        setPlayingIndex(index);
+      }
+    },
+    [playingIndex],
+  );
+
+  const viewConfigRef = useRef({viewAreaCoveragePercentThreshold: 50});
+
+  const onViewRef = useRef(({viewableItems, changed}) => {
+    if (viewableItems.length > 0) {
+      setPlayingIndex(viewableItems[0].index);
+    } else {
+      setPlayingIndex(-1);
+    }
+  });
+
+  /* const changeHandler = ({ viewableItems, changed }) => {
+    console.log("Visible items are", viewableItems);
+    console.log("Changed in this iteration", changed);
+  } */
 
   return (
     <FlatList
+      style={{flex: 1}}
       data={mediaArray}
-      renderItem={({item}) => (
+      renderItem={({item, index}) => (
         <ListItem
           navigation={navigation}
           singleMedia={item}
           userId={user.user_id}
+          isPlaying={index === playingIndex}
+          onPlay={() => handlePlayVideo(index)}
         />
       )}
+      keyExtractor={(item) =>
+        item.id ? item.id.toString() : Math.random().toString()
+      }
+      snapToInterval={ScreenHeight - 180}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      viewabilityConfig={viewConfigRef.current}
+      onViewableItemsChanged={onViewRef.current}
     />
   );
 };

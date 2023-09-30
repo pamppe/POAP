@@ -8,7 +8,7 @@ const App = () => {
     <SafeAreaProvider>
       <MainProvider>
         <Navigator />
-        <StatusBar style="auto" />
+        <StatusBar style="light" translucent backgroundColor="transparent" />
       </MainProvider>
     </SafeAreaProvider>
   );
