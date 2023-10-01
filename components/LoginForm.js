@@ -88,23 +88,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 50,
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'white',
+    borderRadius: 10, // match the card style
+    shadowColor: '#000', // shadow properties
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonText: {
     fontSize: 18,
     color: 'white',
-    alignSelf: 'center'
   },
   button: {
-    height: 40,
-    backgroundColor: '#48BBEC',
-    borderColor: '#48BBEC',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignSelf: 'stretch',
-    justifyContent: 'center'
-  }
+    height: 50, // Increase button height
+    backgroundColor: '#FF385C',
+    borderRadius: 10, // border radius to match the button style
+    marginTop: 20, // Increase top margin for spacing
+  },
+  input: {
+    // Adjust input styles as needed
+  },
 });
-
 export default LoginForm;

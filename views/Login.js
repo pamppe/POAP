@@ -4,7 +4,9 @@ import {
   TouchableOpacity,
   Keyboard,
   Platform,
-  View, Text
+  View,
+  Text,
+  Image,
 } from 'react-native';
 import PropTypes from 'prop-types';
 import {MainContext} from '../contexts/MainContext';
@@ -41,35 +43,43 @@ const Login = ({navigation}) => {
   return (
     <TouchableOpacity
       onPress={() => Keyboard.dismiss()}
-      style={{flex: 1}}
+      style={{ flex: 1, backgroundColor: 'white' }}
       activeOpacity={1}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: 'black' }}
       >
-        {toggleRegister ? (
-          <RegisterForm setToggleRegister={setToggleRegister} />
-        ) : (
-          <LoginForm />
-        )}
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: toggleRegister ? 'lightgray' : '#007BFF',
-              padding: 10,
-              borderRadius: 5,
-              marginRight: 10,
-              marginLeft: 145,
-            }}
-            onPress={() => {
-              setToggleRegister(!toggleRegister);
-            }}
-          >
-            <Text style={{ color: toggleRegister ? 'black' : 'white' }}>
-              {toggleRegister ? 'Login' : 'Register'}
-            </Text>
-          </TouchableOpacity>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Image
+            source={require('../assets/POAP.png')}
+            style={{ width: 380, height: 100, }}
+          />
+          {toggleRegister ? (
+            <RegisterForm setToggleRegister={setToggleRegister} />
+          ) : (
+            <LoginForm />
+          )}
         </View>
+        <TouchableOpacity
+          style={{
+            backgroundColor: toggleRegister ? '#FF385C' : '#FF385C',
+            paddingVertical: 15,
+            borderRadius: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginHorizontal: 40,
+            marginBottom: 30,
+            marginTop: 10,
+          }}
+          onPress={() => {
+            setToggleRegister(!toggleRegister);
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
+            {toggleRegister ? 'Login' : 'Register'}
+          </Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </TouchableOpacity>
   );

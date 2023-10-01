@@ -6,27 +6,32 @@ import Login from '../views/Login';
 import {MainContext} from '../contexts/MainContext';
 import {Icon} from '@rneui/themed';
 import FeedPage from '../views/FeedPage';
+import Profile from '../views/Profile';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const Tabscreen = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        activeTintColor: '#FF385C',
+      }}
+    >
       <Tab.Screen
         name="Feed"
         component={FeedPage}
         options={{
-          tabBarIcon: ({color}) => <Icon name="Home" color={color} />,
+          tabBarIcon: ({color}) => <Icon name="home" color={'#FF385C'}  />,
         }}
       />
-      {/* <Tab.Screen
+      { <Tab.Screen
         name="Profile"
         component={Profile}
         options={{
-          tabBarIcon: ({color}) => <Icon name="person" color={color} />,
+          tabBarIcon: ({color}) => <Icon name="person" color={'#FF385C'} />,
         }}
-      />
+      />/*
       <Tab.Screen
         name="Upload"
         component={Upload}
