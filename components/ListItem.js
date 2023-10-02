@@ -9,25 +9,24 @@ import {
   ScrollView,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useUser} from '../hooks/ApiHooks';
-import {MainContext} from '../contexts/MainContext';
 import {Video} from 'expo-av';
 import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 
-const ListItem = ({singleMedia, navigation, userId}) => {
+const ListItem = ({singleMedia, userId}) => {
   const [owner, setOwner] = useState({});
   const {getUserById} = useUser();
-  const {user, height, currentVideo, setCurrentVideo} = useContext(MainContext);
+  // const {height} = useContext(MainContext);
   const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  console.log('height', height);
+  // const [isPlaying, setIsPlaying] = useState(false);
+  // console.log('height', height);
 
-  const togglePlayBack = () => {
+  /*   const togglePlayBack = () => {
     setIsPlaying(!isPlaying);
-  };
+  }; */
 
   // fetch owner info
   const fetchOwner = async () => {
@@ -41,7 +40,7 @@ const ListItem = ({singleMedia, navigation, userId}) => {
   };
 
   // window height - header height
-  const screenHeight = Dimensions.get('window').height - height;
+  const screenHeight = Dimensions.get('window').height;
   // window height + header height
   // const intervalHeight = screenHeight + height;
   // window width
@@ -53,7 +52,8 @@ const ListItem = ({singleMedia, navigation, userId}) => {
     fetchOwner();
   }, []);
 
-  useEffect(() => {
+  console.log('owner', owner);
+  /*   useEffect(() => {
     if (videoRef.current) {
       // currentVideo.pause();
       // setCurrentVideo(videoRef.current);
@@ -63,16 +63,9 @@ const ListItem = ({singleMedia, navigation, userId}) => {
         videoRef.current.pauseAsync();
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying]); */
   return (
-    <ScrollView
-      style={styles.container}
-      horizontal={false}
-      decelerationRate={'fast'}
-      snapToInterval={Dimensions.get('window').height + height}
-      snapToAlignment={'center'}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView style={styles.container}>
       <View style={styles.mediaContainer}>
         {singleMedia.media_type === 'image' ? (
           <Image
@@ -95,12 +88,12 @@ const ListItem = ({singleMedia, navigation, userId}) => {
             isLooping={true}
             ref={videoRef}
             isMuted={false}
-            shouldPlay={isPlaying}
+            /*             shouldPlay={isPlaying}
             onPlaybackStatusUpdate={(status) => {
               if (status.didJustFinish && !status.isLooping) {
                 togglePlayBack();
               }
-            }}
+            }} */
           />
         )}
 

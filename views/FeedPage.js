@@ -1,14 +1,9 @@
-import React, {useContext} from 'react';
-import {Platform, StatusBar, StyleSheet} from 'react-native';
+import React from 'react';
+import {StatusBar} from 'react-native';
 import List from '../components/List';
 import PropTypes from 'prop-types';
-import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
-import {MainContext} from '../contexts/MainContext';
 
 const Home = ({navigation}) => {
-  const {setHeight} = useContext(MainContext);
-  const tabBarHeight = useBottomTabBarHeight();
-  setHeight(tabBarHeight);
   return (
     <>
       <StatusBar
@@ -21,12 +16,12 @@ const Home = ({navigation}) => {
   );
 };
 
-const styles = StyleSheet.create({
+/* const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-});
+}); */
 
 Home.propTypes = {
   navigation: PropTypes.object,

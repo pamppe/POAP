@@ -10,7 +10,7 @@ const MainProvider = (props) => {
   const [userData, setUserData] = useState({});
   const [update, setUpdate] = useState(false);
   const [height, setHeight] = useState(0);
-  const [currentVideo, setCurrentVideo] = useState(null);
+  // const [currentVideo, setCurrentVideo] = useState(null);
   return (
     <MainContext.Provider
       value={{
@@ -24,8 +24,8 @@ const MainProvider = (props) => {
         setUpdate,
         height,
         setHeight,
-        currentVideo,
-        setCurrentVideo,
+        // currentVideo,
+        // setCurrentVideo,
       }}
     >
       {props.children}

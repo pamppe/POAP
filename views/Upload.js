@@ -91,7 +91,7 @@ const Upload = ({navigation}) => {
       aspect: [4, 3],
     });
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setImage(result.assets[0].uri);
       setType(result.assets[0].type);
     }
