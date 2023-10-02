@@ -9,26 +9,26 @@ import {
   ScrollView,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
-import {FontAwesome} from '@expo/vector-icons'; // You can use any icon library you prefer
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useUser} from '../hooks/ApiHooks';
-import {MainContext} from '../contexts/MainContext';
 import {Video} from 'expo-av';
+import {FontAwesome} from '@expo/vector-icons';
+import avatarImage from '../assets/avatar.png';
 
-const ListItem = ({singleMedia, navigation, userId}) => {
+const ListItem = ({singleMedia, userId}) => {
   const [owner, setOwner] = useState({});
   const {getUserById} = useUser();
-  const {user} = useContext(MainContext);
+  // const {height} = useContext(MainContext);
   const videoRef = useRef(null);
+  // const [isPlaying, setIsPlaying] = useState(false);
+  // console.log('height', height);
 
-  const deleteFile = async () => {
-    // Implement your delete logic here
-  };
+  /*   const togglePlayBack = () => {
+    setIsPlaying(!isPlaying);
+  }; */
 
-  const modifyFile = async () => {
-    // Implement your modify logic here
-  };
+  // fetch owner info
   const fetchOwner = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -39,29 +39,34 @@ const ListItem = ({singleMedia, navigation, userId}) => {
     }
   };
 
-  const screenHeight = Dimensions.get('window').height - 200;
+  // window height - header height
+  const screenHeight = Dimensions.get('window').height;
+  // window height + header height
+  // const intervalHeight = screenHeight + height;
+  // window width
   const screenWidth = Dimensions.get('window').width;
 
-  console.log('singleMedia', singleMedia);
+  // console.log('singleMedia', singleMedia);
 
   useEffect(() => {
     fetchOwner();
   }, []);
 
+  console.log('owner', owner);
+  /*   useEffect(() => {
+    if (videoRef.current) {
+      // currentVideo.pause();
+      // setCurrentVideo(videoRef.current);
+      if (isPlaying) {
+        videoRef.current.playAsync();
+      } else {
+        videoRef.current.pauseAsync();
+      }
+    }
+  }, [isPlaying]); */
   return (
-    <ScrollView
-      style={styles.container}
-      horizontal={true}
-      decelerationRate={0}
-      snapToInterval={screenWidth}
-      snapToAlignment={'center'}
-    >
-      <TouchableOpacity
-        style={styles.touchable}
-        onPress={() => {
-          navigation.navigate('Single', singleMedia);
-        }}
-      >
+    <ScrollView style={styles.container}>
+      <View style={styles.mediaContainer}>
         {singleMedia.media_type === 'image' ? (
           <Image
             style={[
@@ -78,32 +83,45 @@ const ListItem = ({singleMedia, navigation, userId}) => {
               {width: screenWidth, height: screenHeight},
             ]}
             source={{uri: mediaUrl + singleMedia.filename}}
+            resizeMode="cover"
             useNativeControls={true}
-            shouldPlay={true}
             isLooping={true}
             ref={videoRef}
+            isMuted={false}
+            /*             shouldPlay={isPlaying}
+            onPlaybackStatusUpdate={(status) => {
+              if (status.didJustFinish && !status.isLooping) {
+                togglePlayBack();
+              }
+            }} */
           />
         )}
+
         <View style={styles.contentContainer}>
           <Text style={styles.title}>{owner.username}</Text>
           <Text style={styles.description} numberOfLines={3}>
             {singleMedia.description}
           </Text>
         </View>
-        {singleMedia.user_id === userId && (
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.button} onPress={modifyFile}>
-              <FontAwesome name="pencil" size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.deleteButton]}
-              onPress={deleteFile}
-            >
-              <FontAwesome name="trash" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </TouchableOpacity>
+        <View style={styles.verticalNav}>
+          <TouchableOpacity style={styles.navItem}>
+            <Image style={styles.avatar} source={avatarImage} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="heart-o" size={30} color="white" />
+            {/* Number of likes can be added here */}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="comment-o" size={30} color="white" />
+            {/* Number of comments can be added here */}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem}>
+            <FontAwesome name="whatsapp" size={30} color="white" />
+            {/* Number of comments can be added here */}
+          </TouchableOpacity>
+          {/* Add more items as needed */}
+        </View>
+      </View>
     </ScrollView>
   );
 };
@@ -111,18 +129,24 @@ const ListItem = ({singleMedia, navigation, userId}) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'black',
-    marginBottom: 16,
-    alignSelf: 'stretch',
   },
-  touchable: {
-    paddingHorizontal: 16,
+  mediaContainer: {
+    position: 'relative',
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height - 79,
   },
   thumbnail: {
     width: '100%',
-    flex: 1,
-    zIndex: 2,
+    height: '100%',
+    zIndex: 0,
   },
-  contentContainer: {},
+  contentContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    zIndex: 1,
+  },
   title: {
     color: 'white',
     fontSize: 18,
@@ -133,21 +157,21 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  button: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
+  verticalNav: {
+    position: 'absolute',
+    right: 10,
+    bottom: 200, // Adjust as per your requirement
     alignItems: 'center',
-    backgroundColor: 'gray',
   },
-  deleteButton: {
-    backgroundColor: 'red',
+  navItem: {
+    marginBottom: 30,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });
 

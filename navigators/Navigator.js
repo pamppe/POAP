@@ -7,6 +7,8 @@ import {MainContext} from '../contexts/MainContext';
 import {Icon} from '@rneui/themed';
 import FeedPage from '../views/FeedPage';
 import Profile from '../views/Profile';
+import Upload from '../views/Upload';
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -18,11 +20,15 @@ const Tabscreen = () => {
         activeTintColor: '#FF385C',
       }}
     >
+
+    <Tab.Navigator screenOptions={{headerShown: false}}>
       <Tab.Screen
         name="Feed"
         component={FeedPage}
         options={{
           tabBarIcon: ({color}) => <Icon name="home" color={'#FF385C'}  />,
+          tabBarVisible: false, // this hides the tab bar only for this screen
+
         }}
       />
       { <Tab.Screen
@@ -31,14 +37,14 @@ const Tabscreen = () => {
         options={{
           tabBarIcon: ({color}) => <Icon name="person" color={'#FF385C'} />,
         }}
-      />/*
+
       <Tab.Screen
         name="Upload"
         component={Upload}
         options={{
           tabBarIcon: ({color}) => <Icon name="cloud-upload" color={color} />,
         }}
-      /> */}
+      />
     </Tab.Navigator>
   );
 };
