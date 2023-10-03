@@ -200,12 +200,6 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
             shouldPlay={isPlaying}
             onLayout={handleVideoLayout}
             autoPlay={false}
-            /*             shouldPlay={isPlaying}
-            onPlaybackStatusUpdate={(status) => {
-              if (status.didJustFinish && !status.isLooping) {
-                togglePlayBack();
-              }
-            }} */
           />
         )}
 
