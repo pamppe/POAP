@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../hooks/ApiHooks';
 import { Controller, useForm } from 'react-hook-form';
 import { Input as Inputs, Button as Buttons, Card as Cards,} from '@rneui/themed';
+import { Icon } from '@rneui/themed';
 
 const ProfileForm = ({user}) => {
   const {putUser, checkUsername, getUserByToken} = useUser();
@@ -44,7 +45,7 @@ const ProfileForm = ({user}) => {
     }
   };
   return (
-    <Cards containerStyle={Styles.card}>
+    <Cards containerStyle={Styles.Cards}>
       <Cards.Title>Update Profile</Cards.Title>
       <Controller
         control={control}
@@ -147,7 +148,18 @@ const ProfileForm = ({user}) => {
         )}
         name="full_name"
       />
-      <Buttons title="Update!" onPress={handleSubmit(update)} />
+      <Buttons
+        buttonStyle={Styles.Buttons}
+        title="Update"
+        onPress={handleSubmit(update)}
+        icon={
+          <Icon
+            name="update"
+            color="white"
+            style={{ marginRight: 10 }}
+          />
+        }
+      />
     </Cards>
   );
 };
@@ -165,7 +177,7 @@ const Styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  Title: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -177,11 +189,6 @@ const Styles = StyleSheet.create({
     backgroundColor: '#FF385C', // button's background color
     borderRadius: 10, // border radius for rounded corners
     paddingVertical: 15, // Increase the vertical padding
-  },
-  buttonText: {
-    color: 'white', // text color
-    fontSize: 18, // Adjust the font size
-    textAlign: 'center', // Center the text within the button
   },
 });
 
