@@ -151,7 +151,11 @@ const RegisterForm = ({setToggleRegister}) => {
         name="full_name"
       />
 
-      <Button title="Submit" onPress={handleSubmit(register)} buttonStyle={styles.button} />
+      <Button
+        title="Submit"
+        onPress={handleSubmit(register)}
+        buttonStyle={styles.button}
+      />
     </Card>
   );
 };

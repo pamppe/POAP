@@ -1,11 +1,11 @@
 import React from 'react';
-import {Alert, View, StyleSheet} from 'react-native';
+import {Alert, StyleSheet} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
 import {useAuthentication} from '../hooks/ApiHooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useContext} from 'react';
 import {MainContext} from '../contexts/MainContext';
-import {Card, Input, Button,} from '@rneui/themed';
+import {Card, Input, Button} from '@rneui/themed';
 
 const LoginForm = () => {
   const {postLogin} = useAuthentication();
@@ -78,7 +78,11 @@ const LoginForm = () => {
         )}
         name="password"
       />
-      <Button title="Submit" onPress={handleSubmit(logIn)} buttonStyle={styles.button}/>
+      <Button
+        title="Submit"
+        onPress={handleSubmit(logIn)}
+        buttonStyle={styles.button}
+      />
     </Card>
   );
 };
