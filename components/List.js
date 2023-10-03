@@ -25,7 +25,7 @@ const List = ({navigation, myFilesOnly}) => {
   const [playingIndex, setPlayingIndex] = useState(-1); // keep track of the currently playing video
 
   const viewConfigRef = useRef({
-    viewAreaCoveragePercentThreshold: 100, // 100 means the video has to be fully in view to trigger
+    viewAreaCoveragePercentThreshold: 50, // 100 means the video has to be fully in view to trigger
   });
   const onViewRef = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {
