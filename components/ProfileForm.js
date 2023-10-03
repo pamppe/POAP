@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 import {Alert, StyleSheet} from 'react-native';
 import PropTypes from 'prop-types';
-import { MainContext } from '../contexts/MainContext';
+import {MainContext} from '../contexts/MainContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useUser } from '../hooks/ApiHooks';
-import { Controller, useForm } from 'react-hook-form';
-import { Input as Inputs, Button as Buttons, Card as Cards,} from '@rneui/themed';
+import {useUser} from '../hooks/ApiHooks';
+import {Controller, useForm} from 'react-hook-form';
+import {Input as Inputs, Button as Buttons, Card as Cards} from '@rneui/themed';
 
 const ProfileForm = ({user}) => {
   const {putUser, checkUsername, getUserByToken} = useUser();
@@ -190,4 +190,3 @@ ProfileForm.propTypes = {
 };
 
 export default ProfileForm;
-

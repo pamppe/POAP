@@ -43,17 +43,17 @@ const Login = ({navigation}) => {
   return (
     <TouchableOpacity
       onPress={() => Keyboard.dismiss()}
-      style={{ flex: 1, backgroundColor: 'white' }}
+      style={{flex: 1, backgroundColor: 'white'}}
       activeOpacity={1}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1, backgroundColor: 'black' }}
+        style={{flex: 1, backgroundColor: 'black'}}
       >
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{flex: 1, justifyContent: 'center'}}>
           <Image
             source={require('../assets/POAP.png')}
-            style={{ width: 380, height: 100, }}
+            style={{width: 380, height: 100}}
           />
           {toggleRegister ? (
             <RegisterForm setToggleRegister={setToggleRegister} />
@@ -76,7 +76,7 @@ const Login = ({navigation}) => {
             setToggleRegister(!toggleRegister);
           }}
         >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
+          <Text style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
             {toggleRegister ? 'Login' : 'Register'}
           </Text>
         </TouchableOpacity>

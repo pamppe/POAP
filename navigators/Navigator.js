@@ -14,7 +14,9 @@ const Stack = createNativeStackNavigator();
 
 const Tabscreen = () => {
   return (
-    <Tab.Navigator screenOptions={{activeTintColor: '#FF385C', headerShown: false}}>
+    <Tab.Navigator
+      screenOptions={{activeTintColor: '#FF385C', headerShown: false}}
+    >
       <Tab.Screen
         name="Feed"
         component={FeedPage}
@@ -23,18 +25,22 @@ const Tabscreen = () => {
           tabBarVisible: false, // this hides the tab bar only for this screen
         }}
       />
-      { <Tab.Screen
+      {
+        <Tab.Screen
           name="Profile"
           component={Profile}
           options={{
             tabBarIcon: ({color}) => <Icon name="person" color={'#FF385C'} />,
           }}
-      /> }
+        />
+      }
       <Tab.Screen
         name="Upload"
         component={Upload}
         options={{
-          tabBarIcon: ({color}) => <Icon name="cloud-upload" color={'#FF385C'} />,
+          tabBarIcon: ({color}) => (
+            <Icon name="cloud-upload" color={'#FF385C'} />
+          ),
         }}
       />
     </Tab.Navigator>
