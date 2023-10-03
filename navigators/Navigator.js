@@ -38,6 +38,7 @@ const Tabscreen = () => {
         name="Upload"
         component={Upload}
         options={{
+          tabBarVisible: false, // this hides the tab bar only for this screen
           tabBarIcon: ({color}) => (
             <Icon name="cloud-upload" color={'#FF385C'} />
           ),
@@ -60,7 +61,11 @@ const Stackscreen = () => {
           />
         </>
       ) : (
-        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{headerShown: false}}
+        />
       )}
     </Stack.Navigator>
   );
