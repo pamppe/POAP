@@ -153,7 +153,7 @@ const Upload = ({navigation}) => {
           useNativeControls={true}
           resizeMode="cover"
         />
-      )}// TODO: You can add the code to upload the new avatar to the server here
+      )}
 
       <View style={styles.controlBar}>
         <Button title="Choose from Gallery" onPress={pickImage} />

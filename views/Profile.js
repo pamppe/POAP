@@ -85,6 +85,8 @@ const Profile = ({ navigation }) => {
       const avatars = await getFilesByTag('avatar_' + user.user_id);
       if (avatars.length > 0) {
         setAvatar(mediaUrl + avatars.pop().filename);
+      } else {
+        setAvatar('../assets/avatar.png');
       }
     } catch (error) {
       console.error(error);
