@@ -19,6 +19,7 @@ import {Video} from 'expo-av';
 import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
+import {formatDate} from '../utils/functions';
 
 const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const [owner, setOwner] = useState({});
@@ -42,6 +43,17 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   /*   const togglePlayBack = () => {
     setIsPlaying(!isPlaying);
   }; */
+
+  // get username by id
+  const getUsername = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userData = await getUserById(id, token);
+      return userData.username;
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
   // fetch owner info
   const fetchOwner = async () => {
@@ -114,11 +126,37 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const commentsData = await getCommentsById(singleMedia.file_id, token);
-      setComments(commentsData);
+
+      const commentsWithUserDetails = [];
+
+      for (const comment of commentsData) {
+        const username = await getUsername(comment.user_id);
+
+        let userAvatar = avatarImage; // default avatar
+
+        try {
+          const avatars = await getFilesByTag('avatar_' + comment.user_id);
+          if (avatars.length > 0) {
+            userAvatar = {uri: mediaUrl + avatars.pop().filename};
+          }
+        } catch (avatarError) {
+          console.error('Avatar fetch error:', avatarError);
+        }
+
+        commentsWithUserDetails.push({
+          comment: comment.comment,
+          username: username,
+          avatar: userAvatar,
+          time_added: comment.time_added,
+        });
+      }
+
+      setComments(commentsWithUserDetails);
     } catch (error) {
       console.error(error.message);
     }
   };
+
   const sendComment = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -250,25 +288,48 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
                 setModalVisible(!modalVisible);
               }}
             >
-              <View style={styles.modalView}>
-                {/* Render your comments here */}
-                {comments.map((comment, index) => (
-                  <View key={index} style={styles.commentItem}>
-                    <Text style={styles.commentUsername}>
-                      {owner.username}:
-                    </Text>
-                    <Text style={styles.commentText}>{comment.comment}</Text>
-                  </View>
-                ))}
-                <TextInput
-                  id="commentBox"
-                  placeholder="Add a comment..."
-                  style={styles.commentInput}
-                  value={userComments} // set the current value of the TextInput
-                  onChangeText={(text) => setUserComments(text)} // update state when text changes
-                />
-                <Button title="Submit" onPress={sendComment} />
-                <Button title="Close" onPress={() => setModalVisible(false)} />
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <Text style={styles.commentCount}>
+                    {comments.length} comments
+                  </Text>
+                  <ScrollView style={styles.commentsScrollView}>
+                    {comments.map((comment, index) => (
+                      <View key={index} style={styles.commentItem}>
+                        <Image
+                          style={styles.commentAvatar}
+                          source={comment.avatar}
+                        />
+                        <View style={styles.commentRightContainer}>
+                          <Text style={styles.commentUsername}>
+                            {comment.username}:
+                          </Text>
+                          <Text style={styles.commentText}>
+                            {comment.comment}
+                          </Text>
+                          <Text style={styles.commentTime}>
+                            {formatDate(comment.time_added)}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+                  <View style={styles.bottomDivider} />
+                  <TextInput
+                    id="commentBox"
+                    placeholder="Add a comment..."
+                    style={styles.commentInput}
+                    value={userComments} // set the current value of the TextInput
+                    onChangeText={(text) => setUserComments(text)} // update state when text changes
+                  />
+                  <Button title="Submit" onPress={sendComment} />
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <FontAwesome name="times" size={24} color="black" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </Modal>
           </TouchableOpacity>
@@ -335,12 +396,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     right: -10,
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+  },
+  modalView: {
+    position: 'relative',
+    width: '100%',
+    height: '75%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -350,22 +419,62 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'white',
+    borderRadius: 20, // Optional, if you want to make the background circular
+    padding: 5, // Padding to provide space around the icon
+  },
+  commentsScrollView: {
+    flex: 1, // Make sure the ScrollView expands
+    marginBottom: 10, // Some spacing before the input
+    marginTop: 10,
+  },
+  bottomDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: 'gray', // Adjust the color as needed
+    marginBottom: 10,
+  },
   commentItem: {
-    flexDirection: 'row',
+    flexDirection: 'row', // to align items in a row
+    alignItems: 'center', // to vertically align items in the center
     marginBottom: 8,
   },
+  commentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10, // space between avatar and comment
+  },
+  commentRightContainer: {
+    flex: 1, // to take available space
+  },
   commentUsername: {
-    fontWeight: 'bold',
+    color: 'dimgray',
+    fontSize: 13,
   },
   commentText: {
-    marginLeft: 10,
+    marginTop: 4, // space between username and comment
+  },
+  commentTime: {
+    color: 'darkgray',
+    marginTop: 4,
+    fontSize: 12,
   },
   commentInput: {
     width: '100%',
-    height: 40,
+    height: '10%',
     borderColor: 'gray',
     borderWidth: 1,
     marginTop: 20,
+  },
+  commentCount: {
+    marginTop: 0,
+    textAlign: 'center',
   },
 });
 
