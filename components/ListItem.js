@@ -9,7 +9,8 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Button,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
 import React, {useEffect, useRef, useState} from 'react';
@@ -45,6 +46,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   }; */
 
   // get username by id
+
   const getUsername = async (id) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -59,7 +61,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const fetchOwner = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const ownerData = await getUserById(userId, token);
+      const ownerData = await getUserById(singleMedia.user_id, token);
       setOwner(ownerData);
     } catch (error) {
       console.error(error.message);
@@ -73,7 +75,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
 
   const loadAvatar = async () => {
     try {
-      const avatars = await getFilesByTag('avatar_' + userId);
+      const avatars = await getFilesByTag('avatar_' + singleMedia.user_id);
       if (avatars.length > 0) {
         setAvatar({uri: mediaUrl + avatars.pop().filename});
       }
@@ -144,6 +146,8 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
         }
 
         commentsWithUserDetails.push({
+          comment_id: comment.comment_id,
+          userId: comment.user_id,
           comment: comment.comment,
           username: username,
           avatar: userAvatar,
@@ -158,6 +162,10 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   };
 
   const sendComment = async () => {
+    if (userComments.trim() === '') {
+      alert('Comment cannot be empty!');
+      return; // Exit the function
+    }
     try {
       const token = await AsyncStorage.getItem('userToken');
       const response = await postComment(
@@ -171,6 +179,17 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       }
     } catch (error) {
       console.error(error.message);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      await deleteComment(commentId, token);
+      // After successfully deleting the comment, update your comments list.
+      fetchComments();
+    } catch (error) {
+      console.error('Failed to delete the comment:', error.message);
     }
   };
   const shareContent = async () => {
@@ -207,6 +226,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     fetchComments();
   }, [userComments]);
 
+  console.log(singleMedia);
   return (
     <ScrollView
       style={styles.container}
@@ -288,49 +308,68 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
                 setModalVisible(!modalVisible);
               }}
             >
-              <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-                  <Text style={styles.commentCount}>
-                    {comments.length} comments
-                  </Text>
-                  <ScrollView style={styles.commentsScrollView}>
-                    {comments.map((comment, index) => (
-                      <View key={index} style={styles.commentItem}>
-                        <Image
-                          style={styles.commentAvatar}
-                          source={comment.avatar}
-                        />
-                        <View style={styles.commentRightContainer}>
-                          <Text style={styles.commentUsername}>
-                            {comment.username}:
-                          </Text>
-                          <Text style={styles.commentText}>
-                            {comment.comment}
-                          </Text>
-                          <Text style={styles.commentTime}>
-                            {formatDate(comment.time_added)}
-                          </Text>
+              <KeyboardAvoidingView
+                style={{flex: 1}}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <Text style={styles.commentCount}>
+                      {comments.length} comments
+                    </Text>
+                    <ScrollView style={styles.commentsScrollView}>
+                      {comments.map((comment, index) => (
+                        <View key={index} style={styles.commentItem}>
+                          <Image
+                            style={styles.commentAvatar}
+                            source={comment.avatar}
+                          />
+                          <View style={styles.commentRightContainer}>
+                            <Text style={styles.commentUsername}>
+                              {comment.username}:
+                            </Text>
+                            <Text style={styles.commentText}>
+                              {comment.comment}
+                              {/* <Button
+                              title="Delete"
+                              onClick={handleDeleteComment(comment.comment_id)}
+                            ></Button> */}
+                            </Text>
+                            <Text style={styles.commentTime}>
+                              {formatDate(comment.time_added)}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                    ))}
-                  </ScrollView>
-                  <View style={styles.bottomDivider} />
-                  <TextInput
-                    id="commentBox"
-                    placeholder="Add a comment..."
-                    style={styles.commentInput}
-                    value={userComments} // set the current value of the TextInput
-                    onChangeText={(text) => setUserComments(text)} // update state when text changes
-                  />
-                  <Button title="Submit" onPress={sendComment} />
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <FontAwesome name="times" size={24} color="black" />
-                  </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                    {/* <View style={styles.bottomDivider} /> */}
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        id="commentBox"
+                        placeholder="Add a comment..."
+                        style={styles.commentInput}
+                        value={userComments} // set the current value of the TextInput
+                        onChangeText={(text) => setUserComments(text)} // update state when text changes
+                      />
+                      <TouchableOpacity onPress={sendComment}>
+                        <FontAwesome
+                          name="arrow-right"
+                          size={24}
+                          color="gray"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <FontAwesome name="times" size={24} color="black" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+              </KeyboardAvoidingView>
             </Modal>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={shareContent}>
@@ -398,7 +437,7 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: 10,
   },
@@ -465,12 +504,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
   },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
   commentInput: {
-    width: '100%',
-    height: '10%',
+    flex: 1, // to take available space
+    height: 40, // adjust based on your design needs
     borderColor: 'gray',
     borderWidth: 1,
-    marginTop: 20,
+    borderRadius: 20, // rounded edges
+    paddingHorizontal: 10, // to have some space on the sides for text
+    marginRight: 10, // space between input and the send icon
   },
   commentCount: {
     marginTop: 0,
