@@ -15,12 +15,13 @@
     "@react-navigation/native": "^6.1.8",
     "@react-navigation/native-stack": "^6.9.14",
     "@react-navigation/stack": "^6.3.18",
-    "@rneui/base": "^4.0.0-rc.8",
+    "@rneui/base": "^4.0.0-rc.7",
     "@rneui/themed": "^4.0.0-rc.8",
     "axios": "^1.5.1",
     "eslint-plugin-react-native": "^4.1.0",
     "expo": "~49.0.13",
     "expo-av": "~13.4.1",
+    "expo-document-picker": "~11.5.4",
     "expo-image-picker": "~14.3.2",
     "expo-screen-orientation": "~6.0.5",
     "expo-sharing": "^11.7.0",
@@ -34,7 +35,9 @@
     "react-native-gesture-handler": "~2.12.0",
     "react-native-image-picker": "^7.0.0",
     "react-native-safe-area-context": "^4.7.2",
-    "react-native-video": "^5.2.1"
+    "react-native-video": "^5.2.1",
+    "expo-permissions": "~14.2.1",
+    "expo-media-library": "~15.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
