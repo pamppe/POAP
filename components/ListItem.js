@@ -38,6 +38,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const scrollViewRef = useRef(null);
   const [scrollY, setScrollY] = useState(0);
   const [videoLayout, setVideoLayout] = useState({});
+  const [audioPlayer, setAudioPlayer] = useState(null);
   // const [isPlaying, setIsPlaying] = useState(false);
   // console.log('height', height);
 
@@ -212,6 +213,18 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       height: event.nativeEvent.layout.height,
     });
   };
+  const playAudio = async (audioUri) => {
+    const newPlayer = new Audio.Sound();
+    try {
+      await newPlayer.loadAsync(
+        {uri: audioUri},
+        {shouldPlay: true, isLooping: true},
+      );
+      setAudioPlayer(newPlayer);
+    } catch (error) {
+      console.error('Error loading audio', error);
+    }
+  };
   useEffect(() => {
     fetchOwner();
     loadAvatar();
@@ -225,6 +238,17 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   useEffect(() => {
     fetchComments();
   }, [userComments]);
+  useEffect(() => {
+    if (singleMedia.audioFilename) {
+      playAudio(mediaUrl + singleMedia.audioFilename);
+    }
+
+    return () => {
+      if (audioPlayer) {
+        audioPlayer.unloadAsync();
+      }
+    };
+  }, [singleMedia]);
 
   console.log(singleMedia);
   return (

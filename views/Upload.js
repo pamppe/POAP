@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
   Image,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {useContext, useEffect, useState} from 'react';
@@ -46,29 +47,31 @@ const Upload = ({navigation}) => {
     const formData = new FormData();
     formData.append('title', uploadData.title);
     formData.append('description', uploadData.description);
-    const filename = image.split('/').pop();
 
-    let fileExtension = filename.split('.').pop();
-    fileExtension = fileExtension === 'jpg' ? 'jpeg' : fileExtension;
-
-    formData.append('file', {
-      uri: image,
-      name: filename,
-      type: `${type}/${fileExtension}`,
-    });
-    if (audio) {
+    if (type === 'audio') {
       const audioFilename = audio.split('/').pop();
       const audioExtension = audioFilename.split('.').pop();
-      formData.append('audio', {
+      formData.append('file', {
         uri: audio,
         name: audioFilename,
         type: `audio/${audioExtension}`,
       });
+    } else {
+      const filename = image.split('/').pop();
+      let fileExtension = filename.split('.').pop();
+      fileExtension = fileExtension === 'jpg' ? 'jpeg' : fileExtension;
+      formData.append('file', {
+        uri: image,
+        name: filename,
+        type: `${type}/${fileExtension}`,
+      });
     }
 
     try {
+      console.log('FormData', formData);
       const token = await AsyncStorage.getItem('userToken');
       const response = await postMedia(formData, token);
+
       console.log('lataus', response);
       const tagResponse = await postTag(
         {
@@ -79,6 +82,12 @@ const Upload = ({navigation}) => {
       );
       console.log('Post tag: ', tagResponse);
       setUpdate(!update);
+
+      if (audioPlayer) {
+        await audioPlayer.stopAsync();
+        await audioPlayer.unloadAsync();
+        setAudioPlayer(null);
+      }
       Alert.alert('Upload', response.message + 'Id: ' + response.file_id, [
         {
           text: 'Ok',
@@ -221,10 +230,10 @@ const Upload = ({navigation}) => {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           staysActiveInBackground: false,
-          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_MIX_WITH_OTHERS,
+          // interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_MIX_WITH_OTHERS,
           playsInSilentModeIOS: true,
           shouldDuckAndroid: true,
-          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+          //  interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
           playThroughEarpieceAndroid: false,
         });
       } catch (error) {
@@ -235,6 +244,18 @@ const Upload = ({navigation}) => {
     setupAudioMode();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      // Screen is blurred, stop and unload the audio
+      if (audioPlayer) {
+        audioPlayer.stopAsync();
+        audioPlayer.unloadAsync();
+        setAudioPlayer(null);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, audioPlayer]);
   return (
     <KeyboardAvoidingView style={styles.container}>
       {type === 'image' ? (
@@ -263,54 +284,60 @@ const Upload = ({navigation}) => {
 
         <Button title="Choose from Gallery" onPress={pickImage} />
         <Button title="Capture from Camera" onPress={captureFromCamera} />
-        <Controller
-          control={control}
-          rules={{
-            required: {value: true, message: 'is required'},
-          }}
-          render={({field: {onChange, onBlur, value}}) => (
-            <Input
-              placeholder="Title"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              errorMessage={errors.title?.message}
-            />
-          )}
-          name="title"
-        />
-        <Controller
-          control={control}
-          rules={{
-            minLength: {value: 10, message: 'min 10 characters'},
-          }}
-          render={({field: {onChange, onBlur, value}}) => (
-            <Input
-              placeholder="Description (optional)"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              errorMessage={errors.description?.message}
-            />
-          )}
-          name="description"
-        />
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Reset"
-            type="clear"
-            color={'warning'}
-            onPress={resetForm}
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={40}
+        >
+          <Controller
+            control={control}
+            rules={{
+              required: {value: true, message: 'is required'},
+            }}
+            render={({field: {onChange, onBlur, value}}) => (
+              <Input
+                placeholder="Title"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.title?.message}
+              />
+            )}
+            name="title"
           />
-          <Button
-            loading={loading}
-            disabled={
-              image == placeholderImage || errors.description || errors.title
-            }
-            title="Upload"
-            onPress={handleSubmit(upload)}
+          <Controller
+            control={control}
+            rules={{
+              minLength: {value: 10, message: 'min 10 characters'},
+            }}
+            render={({field: {onChange, onBlur, value}}) => (
+              <Input
+                placeholder="Description (optional)"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.description?.message}
+              />
+            )}
+            name="description"
           />
-        </View>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Reset"
+              type="clear"
+              color={'warning'}
+              onPress={resetForm}
+            />
+            <Button
+              loading={loading}
+              disabled={
+                image == placeholderImage || errors.description || errors.title
+              }
+              title="Upload"
+              onPress={handleSubmit(upload)}
+            />
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </KeyboardAvoidingView>
   );
@@ -339,5 +366,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+Upload.propTypes = {
+  navigation: PropTypes.shape({
+    addListener: PropTypes.func.isRequired,
+    navigate: PropTypes.func.isRequired,
+    // Add other navigation methods/properties you're using, if any
+  }).isRequired,
+};
 
 export default Upload;

@@ -56,7 +56,9 @@ const useMedia = (update, myFilesOnly) => {
       const uploadResult = await doFetch(apiUrl + 'media', options);
       return uploadResult;
     } catch (error) {
-      throw new Error('postMedia failed: ' + error.message);
+      throw new Error(
+        'postMedia failed: ' + error.message + 'ErrorData ' + error,
+      );
     } finally {
       setLoading(false);
     }
