@@ -11,9 +11,8 @@ import {useState, useRef} from 'react';
 const ScreenHeight = Dimensions.get('window').height;
 // screen height recudec by bottom tab bar height
 // const ScreenHeightMinusTabBar = ScreenHeight - height;
-
 const List = ({navigation, myFilesOnly}) => {
-  const {update} = useContext(MainContext);
+  const {update, user} = useContext(MainContext); // Added user here
   const {mediaArray} = useMedia(update, myFilesOnly);
   const {height, setHeight} = useContext(MainContext);
 
@@ -22,41 +21,19 @@ const List = ({navigation, myFilesOnly}) => {
   setHeight(tabBarHeight);
   console.log('height', height);
 
-  const [playingIndex, setPlayingIndex] = useState(-1); // keep track of the currently playing video
+  const [playingIndex, setPlayingIndex] = useState(-1);
 
   const viewConfigRef = useRef({
-    viewAreaCoveragePercentThreshold: 50, // 100 means the video has to be fully in view to trigger
+    viewAreaCoveragePercentThreshold: 50,
   });
+
   const onViewRef = useRef(({viewableItems}) => {
-    if (viewableItems.length > 0) {
-      setPlayingIndex(viewableItems[0].index);
-    } else {
-      setPlayingIndex(-1); // no video should play
-    }
-  });
-  /*   const handlePlayVideo = useCallback(
-    (index) => {
-      if (playingIndex !== index) {
-        setPlayingIndex(index);
-      }
-    },
-    [playingIndex],
-  ); */
-
-  /* const viewConfigRef = useRef({viewAreaCoveragePercentThreshold: 50});
-
-  const onViewRef = useRef(({viewableItems, changed}) => {
     if (viewableItems.length > 0) {
       setPlayingIndex(viewableItems[0].index);
     } else {
       setPlayingIndex(-1);
     }
-  }); */
-
-  /*  const changeHandler = ({ viewableItems, changed }) => {
-    console.log("Visible items are", viewableItems);
-    console.log("Changed in this iteration", changed);
-  }  */
+  });
 
   return (
     <FlatList
@@ -66,8 +43,9 @@ const List = ({navigation, myFilesOnly}) => {
         <ListItem
           navigation={navigation}
           singleMedia={item}
-          userId={item.user_id}
+          userId={user.user_id} // Passing the logged-in user's ID here
           isPlaying={index === playingIndex}
+          setPlayingIndex={setPlayingIndex} // Pass this down to ListItem
         />
       )}
       snapToInterval={ScreenHeight - height}

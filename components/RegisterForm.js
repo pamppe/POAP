@@ -7,7 +7,7 @@ import {Alert, StyleSheet} from 'react-native';
 import {PropTypes} from 'prop-types';
 
 const RegisterForm = ({setToggleRegister}) => {
-  const {postUser, checkUserName} = useUser();
+  const {postUser, checkUsername} = useUser();
   const {setIsLoggedIn, setUser} = useContext(MainContext);
 
   const {
@@ -46,7 +46,7 @@ const RegisterForm = ({setToggleRegister}) => {
           minLength: {value: 3, message: 'min length is 3 characters'},
           validate: async (value) => {
             try {
-              const isAvailable = await checkUserName(value);
+              const isAvailable = await checkUsername(value);
               console.log('username available?', value);
               return isAvailable ? isAvailable : 'Username taken';
             } catch (error) {
