@@ -24,7 +24,7 @@ const Upload = ({navigation}) => {
   const {update, setUpdate} = useContext(MainContext);
   const [image, setImage] = useState(placeholderImage);
   const [type, setType] = useState('image');
-  const {postMedia, loading} = useMedia();
+  const {postMedia, loading, putMedia} = useMedia();
   const {postTag} = useTag();
   const [audio, setAudio] = useState(null);
   const [audioPlayer, setAudioPlayer] = useState(null);
@@ -44,35 +44,62 @@ const Upload = ({navigation}) => {
 
   const upload = async (uploadData) => {
     console.log('upload', uploadData);
+    const token = await AsyncStorage.getItem('userToken');
+
+    // 1. Upload the image/video first
     const formData = new FormData();
     formData.append('title', uploadData.title);
     formData.append('description', uploadData.description);
-
-    if (type === 'audio') {
-      const audioFilename = audio.split('/').pop();
-      const audioExtension = audioFilename.split('.').pop();
-      formData.append('file', {
-        uri: audio,
-        name: audioFilename,
-        type: `audio/${audioExtension}`,
-      });
-    } else {
-      const filename = image.split('/').pop();
-      let fileExtension = filename.split('.').pop();
-      fileExtension = fileExtension === 'jpg' ? 'jpeg' : fileExtension;
-      formData.append('file', {
-        uri: image,
-        name: filename,
-        type: `${type}/${fileExtension}`,
-      });
-    }
+    const filename = image.split('/').pop();
+    let fileExtension = filename.split('.').pop();
+    fileExtension = fileExtension === 'jpg' ? 'jpeg' : fileExtension;
+    formData.append('file', {
+      uri: image,
+      name: filename,
+      type: `${type}/${fileExtension}`,
+    });
 
     try {
       console.log('FormData', formData);
-      const token = await AsyncStorage.getItem('userToken');
       const response = await postMedia(formData, token);
-
       console.log('lataus', response);
+
+      // 2. If audio is selected, upload the audio
+      let audioId = null;
+      if (audio) {
+        const audioFormData = new FormData();
+        const audioFilename = audio.split('/').pop();
+        const audioExtension = audioFilename.split('.').pop();
+        audioFormData.append('file', {
+          uri: audio,
+          name: audioFilename,
+          type: `audio/${audioExtension}`,
+        });
+        const audioResponse = await postMedia(audioFormData, token);
+        audioId = audioResponse.file_id;
+      }
+
+      // 3. Update the image/video's description with the audio's file_id
+      if (audioId) {
+        const descriptionObject = {
+          originalDescription: uploadData.description,
+          audioId: audioId,
+        };
+        const updatedDescription = JSON.stringify(descriptionObject);
+
+        // Update the image/video's description with `updatedDescription`.
+        const token = await AsyncStorage.getItem('userToken');
+        const updateResponse = await putMedia(response.file_id, token, {
+          description: updatedDescription,
+        });
+
+        if (updateResponse.message === 'File info updated') {
+          console.log('Description updated successfully');
+        } else {
+          console.error('Failed to update description');
+        }
+      }
+
       const tagResponse = await postTag(
         {
           file_id: response.file_id,
@@ -93,7 +120,6 @@ const Upload = ({navigation}) => {
           text: 'Ok',
           onPress: () => {
             resetForm();
-
             navigation.navigate('Feed');
           },
         },

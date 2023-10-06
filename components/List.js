@@ -45,6 +45,7 @@ const List = ({navigation, myFilesOnly}) => {
           singleMedia={item}
           userId={user.user_id} // Passing the logged-in user's ID here
           isPlaying={index === playingIndex}
+          setPlayingIndex={setPlayingIndex} // Pass this down to ListItem
         />
       )}
       snapToInterval={ScreenHeight - height}

@@ -15,8 +15,14 @@ import {
 import {mediaUrl} from '../utils/app-config';
 import React, {useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useUser, useTag, useFavourite, useComment} from '../hooks/ApiHooks';
-import {Video} from 'expo-av';
+import {
+  useUser,
+  useTag,
+  useFavourite,
+  useComment,
+  useMedia,
+} from '../hooks/ApiHooks';
+import {Video, Audio} from 'expo-av';
 import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
@@ -30,6 +36,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const {getFilesByTag} = useTag();
   const {postFavourite, getFavouritesById, deleteFavourite} = useFavourite();
   const {getCommentsById, deleteComment, postComment} = useComment();
+  const {getFileById} = useMedia();
   const [likes, setLikes] = useState([]);
   const [userLike, setUserLike] = useState(false);
   const [comments, setComments] = useState([]);
@@ -39,14 +46,8 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const [scrollY, setScrollY] = useState(0);
   const [videoLayout, setVideoLayout] = useState({});
   const [audioPlayer, setAudioPlayer] = useState(null);
-  // const [isPlaying, setIsPlaying] = useState(false);
-  // console.log('height', height);
-
-  /*   const togglePlayBack = () => {
-    setIsPlaying(!isPlaying);
-  }; */
-
-  // get username by id
+  const [audioUri, setAudioUri] = useState(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   const getUsername = async (id) => {
     try {
@@ -213,18 +214,45 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       height: event.nativeEvent.layout.height,
     });
   };
-  const playAudio = async (audioUri) => {
-    const newPlayer = new Audio.Sound();
-    try {
-      await newPlayer.loadAsync(
-        {uri: audioUri},
-        {shouldPlay: true, isLooping: true},
-      );
-      setAudioPlayer(newPlayer);
-    } catch (error) {
-      console.error('Error loading audio', error);
+  const handlePlayAudio = async () => {
+    if (!audioUri) return;
+
+    if (!audioPlayer) {
+      const newPlayer = new Audio.Sound();
+      try {
+        await newPlayer.loadAsync({uri: audioUri});
+        setAudioPlayer(newPlayer);
+        await newPlayer.playAsync();
+        setIsAudioPlaying(true);
+      } catch (error) {
+        console.error('Error loading and playing audio', error);
+      }
+    } else {
+      if (isAudioPlaying) {
+        await audioPlayer.stopAsync();
+        setIsAudioPlaying(false);
+      } else {
+        await audioPlayer.playAsync();
+        setIsAudioPlaying(true);
+      }
     }
   };
+
+  let descriptionObject;
+  try {
+    descriptionObject = JSON.parse(singleMedia.description);
+  } catch (error) {
+    // If parsing fails, it's likely a regular description without embedded JSON.
+    descriptionObject = {originalDescription: singleMedia.description};
+  }
+
+  /*   const audioId = descriptionObject.audioId;
+  if (audioId) {
+    getFileById(audioId).then((audioData) => {
+      console.log('audioData', audioData);
+      playAudio(mediaUrl + audioData.filename);
+    });
+  } */
   useEffect(() => {
     fetchOwner();
     loadAvatar();
@@ -239,16 +267,38 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     fetchComments();
   }, [userComments]);
   useEffect(() => {
-    if (singleMedia.audioFilename) {
-      playAudio(mediaUrl + singleMedia.audioFilename);
-    }
+    const fetchAudio = async () => {
+      if (descriptionObject.audioId) {
+        try {
+          const audioData = await getFileById(descriptionObject.audioId);
+          const audioUri = mediaUrl + audioData.filename;
+          setAudioUri(audioUri);
+        } catch (error) {
+          console.error('Error fetching audio:', error);
+        }
+      }
+    };
 
+    fetchAudio();
+  }, [descriptionObject.audioId]);
+
+  useEffect(() => {
     return () => {
       if (audioPlayer) {
         audioPlayer.unloadAsync();
+        setIsAudioPlaying(false);
       }
     };
-  }, [singleMedia]);
+  }, [audioPlayer]);
+  useEffect(() => {
+    if (audioPlayer) {
+      if (isPlaying) {
+        audioPlayer.playAsync();
+      } else {
+        audioPlayer.stopAsync();
+      }
+    }
+  }, [isPlaying]);
 
   console.log(singleMedia);
   return (
@@ -292,6 +342,11 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           </Text>
         </View>
         <View style={styles.verticalNav}>
+          {audioUri && (
+            <TouchableOpacity onPress={handlePlayAudio}>
+              <Text>Play Audio</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.navItem}>
             <Image
               style={styles.avatar}
