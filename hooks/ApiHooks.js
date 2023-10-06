@@ -56,7 +56,9 @@ const useMedia = (update, myFilesOnly) => {
       const uploadResult = await doFetch(apiUrl + 'media', options);
       return uploadResult;
     } catch (error) {
-      throw new Error('postMedia failed: ' + error.message);
+      throw new Error(
+        'postMedia failed: ' + error.message + 'ErrorData ' + error,
+      );
     } finally {
       setLoading(false);
     }
@@ -93,8 +95,16 @@ const useMedia = (update, myFilesOnly) => {
       throw new Error('putMedia failed: ' + error.message);
     }
   };
+  const getFileById = async (id) => {
+    try {
+      const response = await doFetch(apiUrl + 'media/' + id);
+      return response;
+    } catch (error) {
+      throw new Error('getFileById error: ' + error.message);
+    }
+  };
 
-  return {mediaArray, postMedia, loading, deleteMedia, putMedia};
+  return {mediaArray, postMedia, loading, deleteMedia, putMedia, getFileById};
 };
 
 const useAuthentication = () => {

@@ -9,16 +9,24 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Button,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
 import React, {useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useUser, useTag, useFavourite, useComment} from '../hooks/ApiHooks';
-import {Video} from 'expo-av';
+import {
+  useUser,
+  useTag,
+  useFavourite,
+  useComment,
+  useMedia,
+} from '../hooks/ApiHooks';
+import {Video, Audio} from 'expo-av';
 import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
+import {formatDate} from '../utils/functions';
 
 const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const [owner, setOwner] = useState({});
@@ -28,6 +36,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const {getFilesByTag} = useTag();
   const {postFavourite, getFavouritesById, deleteFavourite} = useFavourite();
   const {getCommentsById, deleteComment, postComment} = useComment();
+  const {getFileById} = useMedia();
   const [likes, setLikes] = useState([]);
   const [userLike, setUserLike] = useState(false);
   const [comments, setComments] = useState([]);
@@ -36,18 +45,25 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const scrollViewRef = useRef(null);
   const [scrollY, setScrollY] = useState(0);
   const [videoLayout, setVideoLayout] = useState({});
-  // const [isPlaying, setIsPlaying] = useState(false);
-  // console.log('height', height);
+  const [audioPlayer, setAudioPlayer] = useState(null);
+  const [audioUri, setAudioUri] = useState(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
-  /*   const togglePlayBack = () => {
-    setIsPlaying(!isPlaying);
-  }; */
+  const getUsername = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userData = await getUserById(id, token);
+      return userData.username;
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
 
   // fetch owner info
   const fetchOwner = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const ownerData = await getUserById(userId, token);
+      const ownerData = await getUserById(singleMedia.user_id, token);
       setOwner(ownerData);
     } catch (error) {
       console.error(error.message);
@@ -61,7 +77,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
 
   const loadAvatar = async () => {
     try {
-      const avatars = await getFilesByTag('avatar_' + userId);
+      const avatars = await getFilesByTag('avatar_' + singleMedia.user_id);
       if (avatars.length > 0) {
         setAvatar({uri: mediaUrl + avatars.pop().filename});
       }
@@ -114,12 +130,44 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const commentsData = await getCommentsById(singleMedia.file_id, token);
-      setComments(commentsData);
+
+      const commentsWithUserDetails = [];
+
+      for (const comment of commentsData) {
+        const username = await getUsername(comment.user_id);
+
+        let userAvatar = avatarImage; // default avatar
+
+        try {
+          const avatars = await getFilesByTag('avatar_' + comment.user_id);
+          if (avatars.length > 0) {
+            userAvatar = {uri: mediaUrl + avatars.pop().filename};
+          }
+        } catch (avatarError) {
+          console.error('Avatar fetch error:', avatarError);
+        }
+
+        commentsWithUserDetails.push({
+          comment_id: comment.comment_id,
+          userId: comment.user_id,
+          comment: comment.comment,
+          username: username,
+          avatar: userAvatar,
+          time_added: comment.time_added,
+        });
+      }
+
+      setComments(commentsWithUserDetails);
     } catch (error) {
       console.error(error.message);
     }
   };
+
   const sendComment = async () => {
+    if (userComments.trim() === '') {
+      alert('Comment cannot be empty!');
+      return; // Exit the function
+    }
     try {
       const token = await AsyncStorage.getItem('userToken');
       const response = await postComment(
@@ -133,6 +181,17 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       }
     } catch (error) {
       console.error(error.message);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      await deleteComment(commentId, token);
+      // After successfully deleting the comment, update your comments list.
+      fetchComments();
+    } catch (error) {
+      console.error('Failed to delete the comment:', error.message);
     }
   };
   const shareContent = async () => {
@@ -155,6 +214,45 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       height: event.nativeEvent.layout.height,
     });
   };
+  const handlePlayAudio = async () => {
+    if (!audioUri) return;
+
+    if (!audioPlayer) {
+      const newPlayer = new Audio.Sound();
+      try {
+        await newPlayer.loadAsync({uri: audioUri});
+        setAudioPlayer(newPlayer);
+        await newPlayer.playAsync();
+        setIsAudioPlaying(true);
+      } catch (error) {
+        console.error('Error loading and playing audio', error);
+      }
+    } else {
+      if (isAudioPlaying) {
+        await audioPlayer.stopAsync();
+        setIsAudioPlaying(false);
+      } else {
+        await audioPlayer.playAsync();
+        setIsAudioPlaying(true);
+      }
+    }
+  };
+
+  let descriptionObject;
+  try {
+    descriptionObject = JSON.parse(singleMedia.description);
+  } catch (error) {
+    // If parsing fails, it's likely a regular description without embedded JSON.
+    descriptionObject = {originalDescription: singleMedia.description};
+  }
+
+  /*   const audioId = descriptionObject.audioId;
+  if (audioId) {
+    getFileById(audioId).then((audioData) => {
+      console.log('audioData', audioData);
+      playAudio(mediaUrl + audioData.filename);
+    });
+  } */
   useEffect(() => {
     fetchOwner();
     loadAvatar();
@@ -168,7 +266,41 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   useEffect(() => {
     fetchComments();
   }, [userComments]);
+  useEffect(() => {
+    const fetchAudio = async () => {
+      if (descriptionObject.audioId) {
+        try {
+          const audioData = await getFileById(descriptionObject.audioId);
+          const audioUri = mediaUrl + audioData.filename;
+          setAudioUri(audioUri);
+        } catch (error) {
+          console.error('Error fetching audio:', error);
+        }
+      }
+    };
 
+    fetchAudio();
+  }, [descriptionObject.audioId]);
+
+  useEffect(() => {
+    return () => {
+      if (audioPlayer) {
+        audioPlayer.unloadAsync();
+        setIsAudioPlaying(false);
+      }
+    };
+  }, [audioPlayer]);
+  useEffect(() => {
+    if (audioPlayer) {
+      if (isPlaying) {
+        audioPlayer.playAsync();
+      } else {
+        audioPlayer.stopAsync();
+      }
+    }
+  }, [isPlaying]);
+
+  console.log(singleMedia);
   return (
     <ScrollView
       style={styles.container}
@@ -210,6 +342,11 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           </Text>
         </View>
         <View style={styles.verticalNav}>
+          {audioUri && (
+            <TouchableOpacity onPress={handlePlayAudio}>
+              <Text>Play Audio</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.navItem}>
             <Image
               style={styles.avatar}
@@ -250,26 +387,68 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
                 setModalVisible(!modalVisible);
               }}
             >
-              <View style={styles.modalView}>
-                {/* Render your comments here */}
-                {comments.map((comment, index) => (
-                  <View key={index} style={styles.commentItem}>
-                    <Text style={styles.commentUsername}>
-                      {owner.username}:
+              <KeyboardAvoidingView
+                style={{flex: 1}}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <Text style={styles.commentCount}>
+                      {comments.length} comments
                     </Text>
-                    <Text style={styles.commentText}>{comment.comment}</Text>
+                    <ScrollView style={styles.commentsScrollView}>
+                      {comments.map((comment, index) => (
+                        <View key={index} style={styles.commentItem}>
+                          <Image
+                            style={styles.commentAvatar}
+                            source={comment.avatar}
+                          />
+                          <View style={styles.commentRightContainer}>
+                            <Text style={styles.commentUsername}>
+                              {comment.username}:
+                            </Text>
+                            <Text style={styles.commentText}>
+                              {comment.comment}
+                              {/* <Button
+                              title="Delete"
+                              onClick={handleDeleteComment(comment.comment_id)}
+                            ></Button> */}
+                            </Text>
+                            <Text style={styles.commentTime}>
+                              {formatDate(comment.time_added)}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </ScrollView>
+                    {/* <View style={styles.bottomDivider} /> */}
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        id="commentBox"
+                        placeholder="Add a comment..."
+                        style={styles.commentInput}
+                        value={userComments} // set the current value of the TextInput
+                        onChangeText={(text) => setUserComments(text)} // update state when text changes
+                      />
+                      <TouchableOpacity onPress={sendComment}>
+                        <FontAwesome
+                          name="arrow-right"
+                          size={24}
+                          color="gray"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.closeButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <FontAwesome name="times" size={24} color="black" />
+                    </TouchableOpacity>
                   </View>
-                ))}
-                <TextInput
-                  id="commentBox"
-                  placeholder="Add a comment..."
-                  style={styles.commentInput}
-                  value={userComments} // set the current value of the TextInput
-                  onChangeText={(text) => setUserComments(text)} // update state when text changes
-                />
-                <Button title="Submit" onPress={sendComment} />
-                <Button title="Close" onPress={() => setModalVisible(false)} />
-              </View>
+                </View>
+              </KeyboardAvoidingView>
             </Modal>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={shareContent}>
@@ -335,12 +514,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     right: -10,
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
+  centeredView: {
+    flex: 1,
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    marginTop: 10,
+  },
+  modalView: {
+    position: 'relative',
+    width: '100%',
+    height: '75%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -350,22 +537,70 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'white',
+    borderRadius: 20, // Optional, if you want to make the background circular
+    padding: 5, // Padding to provide space around the icon
+  },
+  commentsScrollView: {
+    flex: 1, // Make sure the ScrollView expands
+    marginBottom: 10, // Some spacing before the input
+    marginTop: 10,
+  },
+  bottomDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: 'gray', // Adjust the color as needed
+    marginBottom: 10,
+  },
   commentItem: {
-    flexDirection: 'row',
+    flexDirection: 'row', // to align items in a row
+    alignItems: 'center', // to vertically align items in the center
     marginBottom: 8,
   },
+  commentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10, // space between avatar and comment
+  },
+  commentRightContainer: {
+    flex: 1, // to take available space
+  },
   commentUsername: {
-    fontWeight: 'bold',
+    color: 'dimgray',
+    fontSize: 13,
   },
   commentText: {
-    marginLeft: 10,
+    marginTop: 4, // space between username and comment
+  },
+  commentTime: {
+    color: 'darkgray',
+    marginTop: 4,
+    fontSize: 12,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   commentInput: {
-    width: '100%',
-    height: 40,
+    flex: 1, // to take available space
+    height: 40, // adjust based on your design needs
     borderColor: 'gray',
     borderWidth: 1,
-    marginTop: 20,
+    borderRadius: 20, // rounded edges
+    paddingHorizontal: 10, // to have some space on the sides for text
+    marginRight: 10, // space between input and the send icon
+  },
+  commentCount: {
+    marginTop: 0,
+    textAlign: 'center',
   },
 });
 
