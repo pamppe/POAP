@@ -18,20 +18,41 @@ import {placeholderImage} from '../utils/app-config';
 import ProfileForm from '../components/ProfileForm';
 import * as ImagePicker from 'expo-image-picker';
 import {mediaUrl} from '../utils/app-config';
+import { Modal } from 'react-native';
 
 const Profile = ({navigation}) => {
   const {setIsLoggedIn, user} = useContext(MainContext);
   const [avatar, setAvatar] = useState(placeholderImage);
   const {postMedia} = useMedia();
   const {postTag, getFilesByTag} = useTag();
+  const [userFiles, setUserFiles] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const logOut = () => {
 
-  const logOut = async () => {
-    try {
-      await AsyncStorage.clear();
-      setIsLoggedIn(false);
-    } catch (error) {
-      console.error(error);
-    }
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Yes',
+          onPress: async () => {
+            console.log(setIsLoggedIn);
+            try {
+              await AsyncStorage.clear();
+              setIsLoggedIn(false);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        },
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel'
+        }
+      ],
+      { cancelable: false }
+    );
   };
 
   const handleAvatarPress = async () => {
@@ -105,94 +126,116 @@ const Profile = ({navigation}) => {
     loadAvatar();
   }, []);
 
+  useEffect(() => {
+    const loadUserFiles = async () => {
+      try {
+        console.log('Loading user files', user);
+        const files = await getFilesByTag('file_' + user.user_id);
+        setUserFiles(files);
+      } catch (error) {
+        console.error("Error loading user's files:", error);
+      }
+    };
+    loadUserFiles();
+  }, []);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{flex: 1}}
     >
       <ScrollView
-        style={{backgroundColor: 'black', flexGrow: 1}}
+        style={{backgroundColor: 'black', flexGrow: 1, paddingTop: 25}}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{alignItems: 'center'}}>
+        <View style={{flexDirection: 'row', justifyContent: 'flex-end', marginTop: 40, paddingRight: 20,}}>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Icon name="settings" color="white" />
+          </TouchableOpacity>
+            </ View>
+        <View style>
           <TouchableOpacity onPress={handleAvatarPress}>
             <Image
               source={{uri: avatar}}
               style={{
-                width: 100,
-                height: 100,
+                width: 115,
+                height: 115,
                 borderRadius: 50,
-                marginTop: 20,
                 alignSelf: 'center',
               }}
             />
           </TouchableOpacity>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: 'bold',
-              marginTop: 10,
-              color: 'white',
-            }}
-          >
-            {user.username}
-          </Text>
-          <Text style={{fontSize: 16, color: 'white', marginBottom: 10}}>
-            {user.full_name}
-          </Text>
         </View>
-        <View style={{marginTop: 20, paddingHorizontal: 20}}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#FF385C',
-              paddingVertical: 15,
-              borderRadius: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onPress={() => {
-              navigation.navigate('My files');
-            }}
-          >
-            <Text
-              style={{
-                color: 'white',
-                fontSize: 16,
-                fontWeight: 'bold',
-                marginRight: 10,
-              }}
-            >
-              My files
-            </Text>
-            <Icon name="storage" color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#FF385C',
-              paddingVertical: 15,
-              borderRadius: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: 10,
-            }}
-            onPress={logOut}
-          >
-            <Text
-              style={{
-                color: 'white',
-                fontSize: 16,
-                fontWeight: 'bold',
-                marginRight: 10,
-              }}
-            >
-              Log out!
-            </Text>
-            <Icon name="logout" color="white" />
-          </TouchableOpacity>
+
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: 'bold',
+            marginTop: 10,
+            color: 'white',
+            alignSelf: 'center',
+          }}
+        >
+          {user.username}
+        </Text>
+        <Text style={{fontSize: 16, color: 'white', marginBottom: 10, alignSelf: 'center'}}>
+          {user.full_name}
+        </Text>
+        <View style={{marginTop: 20}}>
+          {userFiles.map((file, index) => (
+            <View key={index} style={{marginBottom: 10}}>
+              <Image
+                source={{uri: mediaUrl + file.filename}}
+                style={{width: 100, height: 100, zIndex: 2,}} // Adjust size to your preference
+              />
+            </View>
+          ))}
         </View>
-        <ProfileForm user={user} />
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <TouchableOpacity
+            style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.7)'}}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <View style={{width: '90%', maxHeight: '80%', backgroundColor: 'black', padding: 20, borderRadius: 10}}>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={{color: 'white'}}>X</Text>
+              </TouchableOpacity>
+              <ProfileForm user={user} />
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#FF385C',
+                  paddingVertical: 15,
+                  borderRadius: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: 10,
+                }}
+                onPress={logOut}
+              >
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    marginRight: 10,
+                  }}
+                >
+                  Log out!
+                </Text>
+                <Icon name="logout" color="white" />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );

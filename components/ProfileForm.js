@@ -5,7 +5,7 @@ import { MainContext } from '../contexts/MainContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../hooks/ApiHooks';
 import { Controller, useForm } from 'react-hook-form';
-import { Input as Inputs, Button as Buttons, Card as Cards,} from '@rneui/themed';
+import { Input, Button, Card,} from '@rneui/themed';
 
 const ProfileForm = ({user}) => {
   const {putUser, checkUsername, getUserByToken} = useUser();
@@ -44,8 +44,8 @@ const ProfileForm = ({user}) => {
     }
   };
   return (
-    <Cards containerStyle={Styles.card}>
-      <Cards.Title>Update Profile</Cards.Title>
+    <Card containerStyle={Styles.card}>
+      <Card.Title style={Styles.Title}>Update Profile</Card.Title>
       <Controller
         control={control}
         rules={{
@@ -64,7 +64,9 @@ const ProfileForm = ({user}) => {
           },
         }}
         render={({field: {onChange, onBlur, value}}) => (
-          <Inputs
+          <Input
+            style={Styles.Input}
+            placeholderTextColor="#888"
             placeholder="Username"
             onBlur={onBlur}
             onChangeText={onChange}
@@ -81,7 +83,9 @@ const ProfileForm = ({user}) => {
           minLength: {value: 5, message: 'min length is 5 characters'},
         }}
         render={({field: {onChange, onBlur, value}}) => (
-          <Inputs
+          <Input
+            style={Styles.Input}
+            placeholderTextColor="#888"
             placeholder="Password"
             onBlur={onBlur}
             onChangeText={onChange}
@@ -102,7 +106,9 @@ const ProfileForm = ({user}) => {
           },
         }}
         render={({field: {onChange, onBlur, value}}) => (
-          <Inputs
+          <Input
+            style={Styles.Input}
+            placeholderTextColor="#888"
             placeholder="Confirm password"
             onBlur={onBlur}
             onChangeText={onChange}
@@ -122,7 +128,9 @@ const ProfileForm = ({user}) => {
           },
         }}
         render={({field: {onChange, onBlur, value}}) => (
-          <Inputs
+          <Input
+            style={Styles.Input}
+            placeholderTextColor="#888"
             placeholder="Email"
             onBlur={onBlur}
             onChangeText={onChange}
@@ -137,8 +145,10 @@ const ProfileForm = ({user}) => {
         control={control}
         rules={{minLength: {value: 3, message: 'min length is 3 characters'}}}
         render={({field: {onChange, onBlur, value}}) => (
-          <Inputs
+          <Input
+            style={Styles.Input}
             placeholder="Full name"
+            placeholderTextColor="#888"
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
@@ -147,15 +157,20 @@ const ProfileForm = ({user}) => {
         )}
         name="full_name"
       />
-      <Buttons title="Update!" onPress={handleSubmit(update)} />
-    </Cards>
+      <Button   title="Update!"
+                onPress={handleSubmit(update)}
+                buttonStyle={Styles.Button}
+                titleStyle={Styles.buttonText}
+      />
+    </Card>
   );
 };
 const Styles = StyleSheet.create({
-  Cards: {
+  card: {
     margin: 10,
     padding: 10,
     borderRadius: 10,
+    backgroundColor: '#000',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -169,18 +184,22 @@ const Styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#FFF',
   },
-  Inputs: {
+  Input: {
+    backgroundColor: '#000',
+    color: '#FFF',
     marginBottom: 10,
   },
-  Buttons: {
+  Button: {
     backgroundColor: '#FF385C', // button's background color
     borderRadius: 10, // border radius for rounded corners
     paddingVertical: 15, // Increase the vertical padding
   },
   buttonText: {
+    fontWeight: 'bold',
     color: 'white', // text color
-    fontSize: 18, // Adjust the font size
+    fontSize: 16, // Adjust the font size
     textAlign: 'center', // Center the text within the button
   },
 });
