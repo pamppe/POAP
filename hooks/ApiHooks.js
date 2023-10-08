@@ -23,8 +23,8 @@ const useMedia = (update, myFilesOnly) => {
         // list newest file first when using tags
         json.reverse();
       }
-      console.log('userID: ', userId);
-      console.log(json);
+      // console.log('userID: ', userId);
+       console.log('Loadmedia json: ', json);
       const mediaFiles = await Promise.all(
         json.map(async (item) => {
           const fileData = await doFetch(apiUrl + 'media/' + item.file_id);
