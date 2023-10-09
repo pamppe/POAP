@@ -59,6 +59,7 @@ const ListItem = ({
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [videoIsPlaying, setVideoIsPlaying] = useState(true);
   const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+  const [loggedInUserAvatar, setLoggedInUserAvatar] = useState(avatarImage);
 
   const getUsername = async (id) => {
     try {
@@ -91,6 +92,16 @@ const ListItem = ({
       const avatars = await getFilesByTag('avatar_' + singleMedia.user_id);
       if (avatars.length > 0) {
         setAvatar({uri: mediaUrl + avatars.pop().filename});
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const loadLoggedInUserAvatar = async () => {
+    try {
+      const avatars = await getFilesByTag('avatar_' + userId);
+      if (avatars.length > 0) {
+        setLoggedInUserAvatar({uri: mediaUrl + avatars.pop().filename});
       }
     } catch (error) {
       console.error(error);
@@ -376,6 +387,9 @@ const ListItem = ({
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    loadLoggedInUserAvatar();
+  }, []);
   // console
 
   // console.log('singleMedia: ', singleMedia);
@@ -523,6 +537,10 @@ const ListItem = ({
                     </ScrollView>
                     {/* <View style={styles.bottomDivider} /> */}
                     <View style={styles.inputContainer}>
+                      <Image
+                        style={styles.commentAvatar}
+                        source={loggedInUserAvatar}
+                      />
                       <TextInput
                         id="commentBox"
                         placeholder="Add a comment..."
@@ -704,6 +722,7 @@ const styles = StyleSheet.create({
     borderRadius: 20, // rounded edges
     paddingHorizontal: 10, // to have some space on the sides for text
     marginRight: 10, // space between input and the send icon
+    marginLeft: 5, // space between avatar and input
   },
   commentCount: {
     marginTop: 0,
