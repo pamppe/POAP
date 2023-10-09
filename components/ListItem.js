@@ -29,6 +29,7 @@ import * as Sharing from 'expo-sharing';
 import {formatDate} from '../utils/functions';
 import {useIsFocused, useNavigation} from '@react-navigation/core';
 
+
 const ListItem = ({
   singleMedia,
   getFileById,
@@ -419,14 +420,14 @@ const ListItem = ({
           <TouchableOpacity style={styles.navItem}>
             {userLike ? (
               <FontAwesome
-                name="heart-o"
+                name="heart"
                 size={30}
                 color="red"
                 onPress={removeFavourite}
               />
             ) : (
               <FontAwesome
-                name="heart-o"
+                name="heart"
                 size={30}
                 color="white"
                 onPress={createFavourite}
@@ -436,7 +437,7 @@ const ListItem = ({
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <FontAwesome
-              name="comment-o"
+              name="comment"
               size={30}
               color="white"
               onPress={() => setModalVisible(true)}
