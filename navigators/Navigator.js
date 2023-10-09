@@ -50,6 +50,7 @@ const Tabscreen = () => {
 
 const Stackscreen = () => {
   const {isLoggedIn} = useContext(MainContext);
+  // const isLoggedIn = true;
   return (
     <Stack.Navigator>
       {isLoggedIn ? (
@@ -72,6 +73,7 @@ const Stackscreen = () => {
 };
 
 const Navigator = () => {
+  // setHeight tänne
   return (
     <NavigationContainer>
       <Stackscreen />

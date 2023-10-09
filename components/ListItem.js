@@ -27,8 +27,16 @@ import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
 import {formatDate} from '../utils/functions';
+import {useIsFocused, useNavigation} from '@react-navigation/core';
 
-const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
+const ListItem = ({
+  singleMedia,
+  getFileById,
+  userId,
+  isPlaying,
+  setPlayingIndex,
+  navigation,
+}) => {
   const [owner, setOwner] = useState({});
   const {getUserById} = useUser();
   const [avatar, setAvatar] = useState(avatarImage);
@@ -36,7 +44,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const {getFilesByTag} = useTag();
   const {postFavourite, getFavouritesById, deleteFavourite} = useFavourite();
   const {getCommentsById, deleteComment, postComment} = useComment();
-  const {getFileById} = useMedia();
+
   const [likes, setLikes] = useState([]);
   const [userLike, setUserLike] = useState(false);
   const [comments, setComments] = useState([]);
@@ -48,6 +56,8 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const [audioPlayer, setAudioPlayer] = useState(null);
   const [audioUri, setAudioUri] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [videoIsPlaying, setVideoIsPlaying] = useState(true);
+  const [isAudioLoaded, setIsAudioLoaded] = useState(false);
 
   const getUsername = async (id) => {
     try {
@@ -245,6 +255,20 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     // If parsing fails, it's likely a regular description without embedded JSON.
     descriptionObject = {originalDescription: singleMedia.description};
   }
+  const handlePlaybackStatusUpdate = async (playbackStatus) => {
+    if (!playbackStatus.isPlaying && videoIsPlaying) {
+      // The video was paused
+      if (audioPlayer) {
+        await audioPlayer.stopAsync();
+      }
+    } else if (playbackStatus.isPlaying && !videoIsPlaying) {
+      // The video was resumed
+      if (audioPlayer) {
+        await audioPlayer.playAsync();
+      }
+    }
+    setVideoIsPlaying(playbackStatus.isPlaying);
+  };
 
   /*   const audioId = descriptionObject.audioId;
   if (audioId) {
@@ -282,25 +306,57 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     fetchAudio();
   }, [descriptionObject.audioId]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     return () => {
       if (audioPlayer) {
         audioPlayer.unloadAsync();
         setIsAudioPlaying(false);
       }
     };
-  }, [audioPlayer]);
+  }, [audioPlayer]); */
   useEffect(() => {
-    if (audioPlayer) {
+    if (audioPlayer && isAudioLoaded) {
       if (isPlaying) {
-        audioPlayer.playAsync();
+        audioPlayer.playAsync().catch((error) => {
+          console.error('Error playing audio:', error);
+        });
       } else {
-        audioPlayer.stopAsync();
+        audioPlayer.stopAsync().catch((error) => {
+          console.error('Error stopping audio:', error);
+          if (error.code === 'E_AV_SEEKING') {
+            // Handle the error, e.g., try pausing instead
+            audioPlayer.pauseAsync();
+          }
+        });
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, isAudioLoaded]);
 
-  console.log(singleMedia);
+  useEffect(() => {
+    if (isPlaying) {
+      handlePlayAudio();
+    } else {
+      if (audioPlayer) {
+        audioPlayer.stopAsync();
+        setIsAudioPlaying(false);
+      }
+    }
+  }, [isPlaying, audioUri, audioPlayer]);
+
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) {
+      // Stop all media playback
+      if (audioPlayer) {
+        audioPlayer.stopAsync();
+      }
+      setPlayingIndex(-1); // This will stop video playback
+    }
+  }, [isFocused]);
+
+  // console
+
+  // console.log('singleMedia: ', singleMedia);
   return (
     <ScrollView
       style={styles.container}
@@ -319,6 +375,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           />
         ) : (
           <Video
+            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
             style={[
               styles.thumbnail,
               {width: screenWidth, height: screenHeight},
@@ -338,15 +395,21 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
         <View style={styles.contentContainer}>
           <Text style={styles.title}>{owner.username}</Text>
           <Text style={styles.description} numberOfLines={3}>
-            {singleMedia.description}
+            {descriptionObject.originalDescription}
           </Text>
+          {descriptionObject.audioId && (
+            <View style={styles.musicIconContainer}>
+              <FontAwesome name="music" size={18} color="white" />
+              <Text style={styles.musicLabel}>Artist - Original Sound</Text>
+            </View>
+          )}
         </View>
         <View style={styles.verticalNav}>
-          {audioUri && (
+          {/* {audioUri && (
             <TouchableOpacity onPress={handlePlayAudio}>
               <Text>Play Audio</Text>
             </TouchableOpacity>
-          )}
+          )} */}
           <TouchableOpacity style={styles.navItem}>
             <Image
               style={styles.avatar}
@@ -601,6 +664,16 @@ const styles = StyleSheet.create({
   commentCount: {
     marginTop: 0,
     textAlign: 'center',
+  },
+  musicIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5, // Adjust as needed
+  },
+  musicLabel: {
+    color: 'white',
+    marginLeft: 5, // Space between the icon and label
+    fontSize: 14, // Adjust as needed
   },
 });
 
