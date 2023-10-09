@@ -143,8 +143,8 @@ const Upload = ({navigation}) => {
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
+      //allowsEditing: true,
+      //aspect: [4, 3],
     });
 
     if (!result.canceled) {
@@ -288,7 +288,7 @@ const Upload = ({navigation}) => {
         <Image
           source={{uri: image}}
           style={styles.fullscreenMedia}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       ) : (
         <Video

@@ -14,11 +14,26 @@ const ScreenHeight = Dimensions.get('window').height;
 // const ScreenHeightMinusTabBar = ScreenHeight - height;
 const List = ({navigation, mediaArray, getFileById}) => {
   const {update, user, height, setHeight} = useContext(MainContext); // Added user here
-
+  const flatListRef = useRef(null);
   const tabBarHeight = useBottomTabBarHeight();
   console.log('tabBarHeight', tabBarHeight);
   // setHeight(tabBarHeight); //kokeile useEffectin sisällä
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+  };
+  const onRefresh = () => {
+    // Scroll to the top
+    scrollToTop();
 
+    // Add any data fetching or other logic here if needed
+  };
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      onRefresh();
+    }
+  }, [isFocused]);
   useEffect(() => {
     setHeight(tabBarHeight);
   }, [tabBarHeight]);
@@ -45,6 +60,7 @@ const List = ({navigation, mediaArray, getFileById}) => {
   // console.log('mediaArray', mediaArray);
   return (
     <FlatList
+      ref={flatListRef}
       style={{flex: 1}}
       data={mediaArray}
       keyExtractor={(item) => item.file_id}
