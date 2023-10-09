@@ -104,7 +104,7 @@ const useMedia = (update, myFilesOnly) => {
     }
   };
 
-  return {mediaArray, postMedia, loading, deleteMedia, putMedia, getFileById};
+  return {mediaArray, postMedia, loading, deleteMedia, putMedia, getFileById, loadMedia};
 };
 
 const useAuthentication = () => {
@@ -269,7 +269,7 @@ const useComment = () => {
     return await doFetch(apiUrl + 'comments/' + id, options);
   };
 
-  return {postComment, getCommentsById, deleteComment};
+  return {postComment, getCommentsById, deleteComment,};
 };
 
 export {useMedia, useAuthentication, useUser, useTag, useFavourite, useComment};

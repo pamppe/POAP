@@ -10,7 +10,7 @@ import {
   Text,
   Platform,
   KeyboardAvoidingView,
-  Alert,
+  Alert
 } from 'react-native';
 import PropTypes from 'prop-types';
 import {useTag, useMedia} from '../hooks/ApiHooks';
@@ -18,17 +18,19 @@ import {placeholderImage} from '../utils/app-config';
 import ProfileForm from '../components/ProfileForm';
 import * as ImagePicker from 'expo-image-picker';
 import {mediaUrl} from '../utils/app-config';
-import { Modal } from 'react-native';
+import {Modal} from 'react-native';
 
 const Profile = ({navigation}) => {
-  const {setIsLoggedIn, user} = useContext(MainContext);
+  const {setIsLoggedIn, user, update, token} = useContext(MainContext);
   const [avatar, setAvatar] = useState(placeholderImage);
-  const {postMedia} = useMedia();
   const {postTag, getFilesByTag} = useTag();
-  const [userFiles, setUserFiles] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const logOut = () => {
+  const {postMedia, mediaArray, loadMedia, deleteMedia} = useMedia(true, true);
+  const [expandedImage, setExpandedImage] = useState(null);
+  const [filteredMediaArray, setFilteredMediaArray] = useState([]);
+  const [chunkedData, setChunkedData] = useState([]);
 
+  const logOut = () => {
     Alert.alert(
       'Confirmation',
       'Are you sure you want to log out?',
@@ -47,11 +49,12 @@ const Profile = ({navigation}) => {
         },
         {
           text: 'Cancel',
-          onPress: () => {},
+          onPress: () => {
+          },
           style: 'cancel'
         }
       ],
-      { cancelable: false }
+      {cancelable: false}
     );
   };
 
@@ -60,7 +63,7 @@ const Profile = ({navigation}) => {
     if (status !== 'granted') {
       Alert.alert(
         'Sorry',
-        'We need camera roll permissions to make this work!',
+        'We need camera roll permissions to make this work!'
       );
       return;
     }
@@ -68,7 +71,7 @@ const Profile = ({navigation}) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.1,
+      quality: 0.1
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -88,8 +91,10 @@ const Profile = ({navigation}) => {
     formData.append('file', {
       uri: uri,
       name: filename,
-      type: `image/${fileExtension}`,
+      type: `image/${fileExtension}`
     });
+
+    formData.append('description', "avatar")
 
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -99,14 +104,14 @@ const Profile = ({navigation}) => {
 
       await postTag(
         {file_id: response.file_id, tag: 'avatar_' + user.user_id},
-        token,
+        token
       );
       Alert.alert('Avatar uploaded successfully!');
     } catch (error) {
       console.error('Error uploading avatar:', error);
       Alert.alert(
         'Upload error',
-        'There was an error uploading the avatar. Please try again later.',
+        'There was an error uploading the avatar. Please try again later.'
       );
     }
   };
@@ -122,22 +127,46 @@ const Profile = ({navigation}) => {
       console.error(error);
     }
   };
-  useEffect(() => {
-    loadAvatar();
-  }, []);
+
+  const handleImageClick = (item) => {
+    setExpandedImage(item);
+  };
+
+  const handleDeleteMedia = async (fileId) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const result = await deleteMedia(fileId, token);
+      if (result) {
+        // Close the expanded image view after deletion
+        setExpandedImage(null);
+        // Reload media to show the updated list without the deleted image
+        loadMedia(user.user_id);
+      }
+    } catch (error) {
+      console.error('Error deleting media:', error);
+      // Handle error, maybe show a toast or alert to the user
+    }
+  };
+
+  const chunkArray = (array, chunkSize) => {
+    const results = [];
+    while (array.length) {
+      results.push(array.splice(0, chunkSize));
+    }
+    return results;
+  };
 
   useEffect(() => {
-    const loadUserFiles = async () => {
-      try {
-        console.log('Loading user files', user);
-        const files = await getFilesByTag('file_' + user.user_id);
-        setUserFiles(files);
-      } catch (error) {
-        console.error("Error loading user's files:", error);
-      }
-    };
-    loadUserFiles();
-  }, []);
+    loadAvatar();
+    loadMedia(user.user_id);
+  }, [update]);
+
+  useEffect(() => {
+    setFilteredMediaArray(mediaArray.filter(item =>
+      item.description !== 'avatar'
+    ));
+    setChunkedData(chunkArray([...filteredMediaArray], 3));
+  }, [mediaArray]);
 
   return (
     <KeyboardAvoidingView
@@ -146,13 +175,18 @@ const Profile = ({navigation}) => {
     >
       <ScrollView
         style={{backgroundColor: 'black', flexGrow: 1, paddingTop: 25}}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
-        <View style={{flexDirection: 'row', justifyContent: 'flex-end', marginTop: 40, paddingRight: 20,}}>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          marginTop: 40,
+          paddingRight: 20
+        }}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Icon name="settings" color="white" />
+            <Icon name='settings' color='white' />
           </TouchableOpacity>
-            </ View>
+        </ View>
         <View style>
           <TouchableOpacity onPress={handleAvatarPress}>
             <Image
@@ -161,38 +195,32 @@ const Profile = ({navigation}) => {
                 width: 115,
                 height: 115,
                 borderRadius: 50,
-                alignSelf: 'center',
+                alignSelf: 'center'
               }}
             />
           </TouchableOpacity>
         </View>
-
         <Text
           style={{
             fontSize: 20,
             fontWeight: 'bold',
             marginTop: 10,
             color: 'white',
-            alignSelf: 'center',
+            alignSelf: 'center'
           }}
         >
           {user.username}
         </Text>
-        <Text style={{fontSize: 16, color: 'white', marginBottom: 10, alignSelf: 'center'}}>
+        <Text style={{
+          fontSize: 16,
+          color: 'white',
+          marginBottom: 10,
+          alignSelf: 'center'
+        }}>
           {user.full_name}
         </Text>
-        <View style={{marginTop: 20}}>
-          {userFiles.map((file, index) => (
-            <View key={index} style={{marginBottom: 10}}>
-              <Image
-                source={{uri: mediaUrl + file.filename}}
-                style={{width: 100, height: 100, zIndex: 2,}} // Adjust size to your preference
-              />
-            </View>
-          ))}
-        </View>
         <Modal
-          animationType="slide"
+          animationType='slide'
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => {
@@ -200,11 +228,22 @@ const Profile = ({navigation}) => {
           }}
         >
           <TouchableOpacity
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.7)'}}
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)'
+            }}
             activeOpacity={1}
             onPress={() => setModalVisible(false)}
           >
-            <View style={{width: '90%', maxHeight: '80%', backgroundColor: 'black', padding: 20, borderRadius: 10}}>
+            <View style={{
+              width: '90%',
+              maxHeight: '80%',
+              backgroundColor: 'black',
+              padding: 20,
+              borderRadius: 10
+            }}>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Text style={{color: 'white'}}>X</Text>
               </TouchableOpacity>
@@ -217,7 +256,7 @@ const Profile = ({navigation}) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginTop: 10,
+                  marginTop: 10
                 }}
                 onPress={logOut}
               >
@@ -226,15 +265,81 @@ const Profile = ({navigation}) => {
                     color: 'white',
                     fontSize: 16,
                     fontWeight: 'bold',
-                    marginRight: 10,
+                    marginRight: 10
                   }}
                 >
                   Log out!
                 </Text>
-                <Icon name="logout" color="white" />
+                <Icon name='logout' color='white' />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
+        </Modal>
+        <View style={{flex: 1}}>
+          {chunkedData.map((row, rowIndex) => (
+            <View key={rowIndex}
+                  style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
+              {row.map((item) => (
+                <View key={item.file_id} style={{width: '33.33%', padding: 5}}>
+                  <TouchableOpacity onPress={() => handleImageClick(item)}>
+                    {item.filename &&
+                      <Image
+                        source={{uri: mediaUrl + item.filename}}
+                        style={{
+                          width: '100%',
+                          aspectRatio: 1
+                        }}
+                      />}
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+        <Modal
+          animationType='slide'
+          transparent={true}
+          visible={!!expandedImage}
+          onRequestClose={() => setExpandedImage(null)}
+        >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+          }}>
+            <View
+              style={{width: '90%', maxHeight: '80%', alignItems: 'center'}}>
+              <TouchableOpacity onPress={() => setExpandedImage(null)}>
+                <Text style={{
+                  color: 'white',
+                  fontSize: 24,
+                  alignSelf: 'flex-end'
+                }}>X</Text>
+              </TouchableOpacity>
+              {expandedImage && (
+                <Image
+                  source={{uri: mediaUrl + expandedImage.filename}}
+                  style={{
+                    width: '90%',
+                    height: '60%',
+                    resizeMode: 'contain'
+                  }}
+                />
+              )}
+              <TouchableOpacity
+                style={{
+                  marginTop: 20,
+                  backgroundColor: '#FF385C',
+                  padding: 10,
+                  borderRadius: 5
+                }}
+                onPress={() => handleDeleteMedia(expandedImage.file_id)}
+              >
+                <Text style={{color: 'white'}}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -242,7 +347,7 @@ const Profile = ({navigation}) => {
 };
 
 Profile.propTypes = {
-  navigation: PropTypes.object,
+  navigation: PropTypes.object
 };
 
 export default Profile;
