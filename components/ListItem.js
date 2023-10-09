@@ -28,7 +28,11 @@ import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
 import {formatDate} from '../utils/functions';
-import {useIsFocused, useNavigation} from '@react-navigation/core';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/core';
 
 const ListItem = ({
   singleMedia,
@@ -390,7 +394,6 @@ const ListItem = ({
   useEffect(() => {
     loadLoggedInUserAvatar();
   }, []);
-  // console
 
   // console.log('singleMedia: ', singleMedia);
   return (
