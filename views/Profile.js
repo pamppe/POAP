@@ -19,6 +19,8 @@ import ProfileForm from '../components/ProfileForm';
 import * as ImagePicker from 'expo-image-picker';
 import {mediaUrl} from '../utils/app-config';
 import {Modal} from 'react-native';
+import {Video} from 'expo-av';
+
 
 const Profile = ({navigation}) => {
   const {setIsLoggedIn, user, update, token} = useContext(MainContext);
@@ -29,6 +31,7 @@ const Profile = ({navigation}) => {
   const [expandedImage, setExpandedImage] = useState(null);
   const [filteredMediaArray, setFilteredMediaArray] = useState([]);
   const [chunkedData, setChunkedData] = useState([]);
+  const [refreshFlag, setRefreshFlag] = useState(false);
 
   const logOut = () => {
     Alert.alert(
@@ -114,6 +117,7 @@ const Profile = ({navigation}) => {
         'There was an error uploading the avatar. Please try again later.'
       );
     }
+    setRefreshFlag(prevFlag => !prevFlag);
   };
   const loadAvatar = async () => {
     try {
@@ -128,7 +132,16 @@ const Profile = ({navigation}) => {
     }
   };
 
+  const isVideoFile = (filename) => {
+    const ext = filename.split('.').pop();
+    return ['mp4', 'mov', 'm4v', '3gp', 'avi'].includes(ext);
+  };
+
   const handleImageClick = (item) => {
+    if (isVideoFile(item.filename)) {
+      // This will be used to differentiate between an image and a video in your modal
+      item.isVideo = true;
+    }
     setExpandedImage(item);
   };
 
@@ -146,6 +159,7 @@ const Profile = ({navigation}) => {
       console.error('Error deleting media:', error);
       // Handle error, maybe show a toast or alert to the user
     }
+    setRefreshFlag(prevFlag => !prevFlag);
   };
 
   const chunkArray = (array, chunkSize) => {
@@ -157,9 +171,17 @@ const Profile = ({navigation}) => {
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      await loadAvatar();
+      await loadMedia(user.user_id);
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     loadAvatar();
     loadMedia(user.user_id);
-  }, [update]);
+  }, [refreshFlag]);
 
   useEffect(() => {
     setFilteredMediaArray(mediaArray.filter(item =>
@@ -282,14 +304,22 @@ const Profile = ({navigation}) => {
               {row.map((item) => (
                 <View key={item.file_id} style={{width: '33.33%', padding: 5}}>
                   <TouchableOpacity onPress={() => handleImageClick(item)}>
-                    {item.filename &&
+                    {isVideoFile(item.filename) ? (
+                      <Video
+                        source={{uri: mediaUrl + item.filename}}
+                        rate={1.0}
+                        volume={1.0}
+                        isMuted={false}
+                        resizeMode='cover' // or 'contain' based on your preference
+                        shouldPlay={false}
+                        style={{width: '100%', aspectRatio: 1}}
+                      />
+                    ) : (
                       <Image
                         source={{uri: mediaUrl + item.filename}}
-                        style={{
-                          width: '100%',
-                          aspectRatio: 1
-                        }}
-                      />}
+                        style={{width: '100%', aspectRatio: 1}}
+                      />
+                    )}
                   </TouchableOpacity>
                 </View>
               ))}
@@ -317,13 +347,28 @@ const Profile = ({navigation}) => {
                   alignSelf: 'flex-end'
                 }}>X</Text>
               </TouchableOpacity>
-              {expandedImage && (
+              {expandedImage && !expandedImage.isVideo && (
                 <Image
                   source={{uri: mediaUrl + expandedImage.filename}}
                   style={{
                     width: '90%',
                     height: '60%',
                     resizeMode: 'contain'
+                  }}
+                />
+              )}
+              {expandedImage && expandedImage.isVideo && (
+                <Video
+                  source={{uri: mediaUrl + expandedImage.filename}}
+                  rate={1.0}
+                  volume={1.0}
+                  isMuted={false}
+                  resizeMode='contain'
+                  shouldPlay
+                  useNativeControls // Allow user to control video playback
+                  style={{
+                    width: '80%',
+                    height: '90%'
                   }}
                 />
               )}
