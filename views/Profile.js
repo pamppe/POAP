@@ -94,7 +94,7 @@ const Profile = ({navigation}) => {
       type: `image/${fileExtension}`
     });
 
-    formData.append('description', "avatar")
+    formData.append('description', 'avatar');
 
     try {
       const token = await AsyncStorage.getItem('userToken');
