@@ -15,33 +15,33 @@ const Stack = createNativeStackNavigator();
 const Tabscreen = () => {
   return (
     <Tab.Navigator
-      screenOptions={{activeTintColor: '#FF385C', headerShown: false}}
+      screenOptions={{
+        activeTintColor: '#FFFFFF',
+        headerShown: false,
+        tabBarStyle: {backgroundColor: '#000000'},
+      }}
     >
       <Tab.Screen
         name="Feed"
         component={FeedPage}
         options={{
-          tabBarIcon: ({color}) => <Icon name="home" color={'#FF385C'} />,
+          tabBarIcon: ({color}) => <Icon name="home" color={color} />,
           tabBarVisible: false, // this hides the tab bar only for this screen
         }}
       />
-      {
-        <Tab.Screen
-          name="Profile"
-          component={Profile}
-          options={{
-            tabBarIcon: ({color}) => <Icon name="person" color={'#FF385C'} />,
-          }}
-        />
-      }
       <Tab.Screen
         name="Upload"
         component={Upload}
         options={{
           tabBarVisible: false, // this hides the tab bar only for this screen
-          tabBarIcon: ({color}) => (
-            <Icon name="cloud-upload" color={'#FF385C'} />
-          ),
+          tabBarIcon: ({color}) => <Icon name="cloud-upload" color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ({color}) => <Icon name="person" color={color} />,
         }}
       />
     </Tab.Navigator>
@@ -50,6 +50,7 @@ const Tabscreen = () => {
 
 const Stackscreen = () => {
   const {isLoggedIn} = useContext(MainContext);
+  // const isLoggedIn = true;
   return (
     <Stack.Navigator>
       {isLoggedIn ? (
@@ -72,6 +73,7 @@ const Stackscreen = () => {
 };
 
 const Navigator = () => {
+  // setHeight tänne
   return (
     <NavigationContainer>
       <Stackscreen />

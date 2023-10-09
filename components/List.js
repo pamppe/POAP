@@ -1,25 +1,43 @@
 import {FlatList, Dimensions} from 'react-native';
 import ListItem from './ListItem';
-import {useMedia} from '../hooks/ApiHooks';
+
 import PropTypes from 'prop-types';
-import {useContext} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {MainContext} from '../contexts/MainContext';
 import {useBottomTabBarHeight} from '@react-navigation/bottom-tabs';
 import {useState, useRef} from 'react';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 
 // screen Height
 const ScreenHeight = Dimensions.get('window').height;
 // screen height recudec by bottom tab bar height
 // const ScreenHeightMinusTabBar = ScreenHeight - height;
-const List = ({navigation, myFilesOnly}) => {
-  const {update, user} = useContext(MainContext); // Added user here
-  const {mediaArray} = useMedia(update, myFilesOnly);
-  const {height, setHeight} = useContext(MainContext);
-
+const List = ({navigation, mediaArray, getFileById}) => {
+  const {update, user, height, setHeight} = useContext(MainContext); // Added user here
+  const flatListRef = useRef(null);
   const tabBarHeight = useBottomTabBarHeight();
   console.log('tabBarHeight', tabBarHeight);
-  setHeight(tabBarHeight);
-  console.log('height', height);
+  // setHeight(tabBarHeight); //kokeile useEffectin sisällä
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+  };
+  const onRefresh = () => {
+    // Scroll to the top
+    scrollToTop();
+
+    // Add any data fetching or other logic here if needed
+  };
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      onRefresh();
+    }
+  }, [isFocused]);
+  useEffect(() => {
+    setHeight(tabBarHeight);
+  }, [tabBarHeight]);
+  console.log('tabBarHeight', height);
 
   const [playingIndex, setPlayingIndex] = useState(-1);
 
@@ -28,20 +46,28 @@ const List = ({navigation, myFilesOnly}) => {
   });
 
   const onViewRef = useRef(({viewableItems}) => {
+    // Stop any currently playing audio
+    if (playingIndex !== -1 && playingIndex !== viewableItems[0].index) {
+      setPlayingIndex(-1);
+    }
+
     if (viewableItems.length > 0) {
       setPlayingIndex(viewableItems[0].index);
     } else {
       setPlayingIndex(-1);
     }
   });
-
+  // console.log('mediaArray', mediaArray);
   return (
     <FlatList
+      ref={flatListRef}
       style={{flex: 1}}
       data={mediaArray}
+      keyExtractor={(item) => item.file_id}
       renderItem={({item, index}) => (
         <ListItem
           navigation={navigation}
+          getFileById={getFileById}
           singleMedia={item}
           userId={user.user_id} // Passing the logged-in user's ID here
           isPlaying={index === playingIndex}
@@ -63,4 +89,4 @@ List.propTypes = {
   myFilesOnly: PropTypes.bool,
 };
 
-export default List;
+export default React.memo(List);

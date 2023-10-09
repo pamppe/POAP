@@ -11,6 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
 import React, {useEffect, useRef, useState} from 'react';
@@ -27,8 +28,20 @@ import {FontAwesome} from '@expo/vector-icons';
 import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
 import {formatDate} from '../utils/functions';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/core';
 
-const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
+const ListItem = ({
+  singleMedia,
+  getFileById,
+  userId,
+  isPlaying,
+  setPlayingIndex,
+  navigation,
+}) => {
   const [owner, setOwner] = useState({});
   const {getUserById} = useUser();
   const [avatar, setAvatar] = useState(avatarImage);
@@ -36,7 +49,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const {getFilesByTag} = useTag();
   const {postFavourite, getFavouritesById, deleteFavourite} = useFavourite();
   const {getCommentsById, deleteComment, postComment} = useComment();
-  const {getFileById} = useMedia();
+
   const [likes, setLikes] = useState([]);
   const [userLike, setUserLike] = useState(false);
   const [comments, setComments] = useState([]);
@@ -48,6 +61,9 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   const [audioPlayer, setAudioPlayer] = useState(null);
   const [audioUri, setAudioUri] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [videoIsPlaying, setVideoIsPlaying] = useState(true);
+  const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+  const [loggedInUserAvatar, setLoggedInUserAvatar] = useState(avatarImage);
 
   const getUsername = async (id) => {
     try {
@@ -80,6 +96,16 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
       const avatars = await getFilesByTag('avatar_' + singleMedia.user_id);
       if (avatars.length > 0) {
         setAvatar({uri: mediaUrl + avatars.pop().filename});
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const loadLoggedInUserAvatar = async () => {
+    try {
+      const avatars = await getFilesByTag('avatar_' + userId);
+      if (avatars.length > 0) {
+        setLoggedInUserAvatar({uri: mediaUrl + avatars.pop().filename});
       }
     } catch (error) {
       console.error(error);
@@ -185,15 +211,36 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
   };
 
   const handleDeleteComment = async (commentId) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      await deleteComment(commentId, token);
-      // After successfully deleting the comment, update your comments list.
-      fetchComments();
-    } catch (error) {
-      console.error('Failed to delete the comment:', error.message);
-    }
+    // Show a confirmation dialog
+    Alert.alert(
+      'Delete Comment', // Title
+      'Are you sure you want to delete this comment?', // Message
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('userToken');
+              await deleteComment(commentId, token);
+              // After successfully deleting the comment, update your comments list.
+              fetchComments();
+              // Notify the user that the comment was deleted
+              Alert.alert('Comment Deleted', 'Your comment has been deleted.');
+            } catch (error) {
+              console.error('Failed to delete the comment:', error.message);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      {cancelable: true},
+    );
   };
+
   const shareContent = async () => {
     const shareUrl = mediaUrl + singleMedia.filename; // URL of the media
 
@@ -245,6 +292,20 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     // If parsing fails, it's likely a regular description without embedded JSON.
     descriptionObject = {originalDescription: singleMedia.description};
   }
+  const handlePlaybackStatusUpdate = async (playbackStatus) => {
+    if (!playbackStatus.isPlaying && videoIsPlaying) {
+      // The video was paused
+      if (audioPlayer) {
+        await audioPlayer.stopAsync();
+      }
+    } else if (playbackStatus.isPlaying && !videoIsPlaying) {
+      // The video was resumed
+      if (audioPlayer) {
+        await audioPlayer.playAsync();
+      }
+    }
+    setVideoIsPlaying(playbackStatus.isPlaying);
+  };
 
   /*   const audioId = descriptionObject.audioId;
   if (audioId) {
@@ -282,25 +343,59 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
     fetchAudio();
   }, [descriptionObject.audioId]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     return () => {
       if (audioPlayer) {
         audioPlayer.unloadAsync();
         setIsAudioPlaying(false);
       }
     };
-  }, [audioPlayer]);
+  }, [audioPlayer]); */
   useEffect(() => {
-    if (audioPlayer) {
+    if (audioPlayer && isAudioLoaded) {
       if (isPlaying) {
-        audioPlayer.playAsync();
+        audioPlayer.playAsync().catch((error) => {
+          console.error('Error playing audio:', error);
+        });
       } else {
-        audioPlayer.stopAsync();
+        audioPlayer.stopAsync().catch((error) => {
+          console.error('Error stopping audio:', error);
+          if (error.code === 'E_AV_SEEKING') {
+            // Handle the error, e.g., try pausing instead
+            audioPlayer.pauseAsync();
+          }
+        });
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, isAudioLoaded]);
 
-  console.log(singleMedia);
+  useEffect(() => {
+    if (isPlaying) {
+      handlePlayAudio();
+    } else {
+      if (audioPlayer) {
+        audioPlayer.stopAsync();
+        setIsAudioPlaying(false);
+      }
+    }
+  }, [isPlaying, audioUri, audioPlayer]);
+
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) {
+      // Stop all media playback
+      if (audioPlayer) {
+        audioPlayer.stopAsync();
+      }
+      setPlayingIndex(-1); // This will stop video playback
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
+    loadLoggedInUserAvatar();
+  }, []);
+
+  // console.log('singleMedia: ', singleMedia);
   return (
     <ScrollView
       style={styles.container}
@@ -319,6 +414,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           />
         ) : (
           <Video
+            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
             style={[
               styles.thumbnail,
               {width: screenWidth, height: screenHeight},
@@ -338,15 +434,21 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
         <View style={styles.contentContainer}>
           <Text style={styles.title}>{owner.username}</Text>
           <Text style={styles.description} numberOfLines={3}>
-            {singleMedia.description}
+            {descriptionObject.originalDescription}
           </Text>
+          {descriptionObject.audioId && (
+            <View style={styles.musicIconContainer}>
+              <FontAwesome name="music" size={18} color="white" />
+              <Text style={styles.musicLabel}>Artist - Original Sound</Text>
+            </View>
+          )}
         </View>
         <View style={styles.verticalNav}>
-          {audioUri && (
+          {/* {audioUri && (
             <TouchableOpacity onPress={handlePlayAudio}>
               <Text>Play Audio</Text>
             </TouchableOpacity>
-          )}
+          )} */}
           <TouchableOpacity style={styles.navItem}>
             <Image
               style={styles.avatar}
@@ -356,14 +458,14 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           <TouchableOpacity style={styles.navItem}>
             {userLike ? (
               <FontAwesome
-                name="heart-o"
+                name="heart"
                 size={30}
                 color="red"
                 onPress={removeFavourite}
               />
             ) : (
               <FontAwesome
-                name="heart-o"
+                name="heart"
                 size={30}
                 color="white"
                 onPress={createFavourite}
@@ -373,7 +475,7 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <FontAwesome
-              name="comment-o"
+              name="comment"
               size={30}
               color="white"
               onPress={() => setModalVisible(true)}
@@ -418,12 +520,30 @@ const ListItem = ({singleMedia, userId, isPlaying, navigation}) => {
                             <Text style={styles.commentTime}>
                               {formatDate(comment.time_added)}
                             </Text>
+                            {comment.userId === userId && (
+                              <TouchableOpacity
+                                onPress={() =>
+                                  handleDeleteComment(comment.comment_id)
+                                }
+                                style={styles.deleteIconContainer}
+                              >
+                                <FontAwesome
+                                  name="trash"
+                                  size={18}
+                                  color="dimgray"
+                                />
+                              </TouchableOpacity>
+                            )}
                           </View>
                         </View>
                       ))}
                     </ScrollView>
                     {/* <View style={styles.bottomDivider} /> */}
                     <View style={styles.inputContainer}>
+                      <Image
+                        style={styles.commentAvatar}
+                        source={loggedInUserAvatar}
+                      />
                       <TextInput
                         id="commentBox"
                         placeholder="Add a comment..."
@@ -583,6 +703,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
   },
+  deleteIconContainer: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: [{translateY: -9}], // half of the icon size to center it vertically
+    width: 18,
+    height: 18,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -597,10 +725,21 @@ const styles = StyleSheet.create({
     borderRadius: 20, // rounded edges
     paddingHorizontal: 10, // to have some space on the sides for text
     marginRight: 10, // space between input and the send icon
+    marginLeft: 5, // space between avatar and input
   },
   commentCount: {
     marginTop: 0,
     textAlign: 'center',
+  },
+  musicIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5, // Adjust as needed
+  },
+  musicLabel: {
+    color: 'white',
+    marginLeft: 5, // Space between the icon and label
+    fontSize: 14, // Adjust as needed
   },
 });
 
