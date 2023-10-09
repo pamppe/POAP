@@ -11,6 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
 import React, {useEffect, useRef, useState} from 'react';
@@ -28,7 +29,6 @@ import avatarImage from '../assets/avatar.png';
 import * as Sharing from 'expo-sharing';
 import {formatDate} from '../utils/functions';
 import {useIsFocused, useNavigation} from '@react-navigation/core';
-
 
 const ListItem = ({
   singleMedia,
@@ -196,15 +196,36 @@ const ListItem = ({
   };
 
   const handleDeleteComment = async (commentId) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      await deleteComment(commentId, token);
-      // After successfully deleting the comment, update your comments list.
-      fetchComments();
-    } catch (error) {
-      console.error('Failed to delete the comment:', error.message);
-    }
+    // Show a confirmation dialog
+    Alert.alert(
+      'Delete Comment', // Title
+      'Are you sure you want to delete this comment?', // Message
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('userToken');
+              await deleteComment(commentId, token);
+              // After successfully deleting the comment, update your comments list.
+              fetchComments();
+              // Notify the user that the comment was deleted
+              Alert.alert('Comment Deleted', 'Your comment has been deleted.');
+            } catch (error) {
+              console.error('Failed to delete the comment:', error.message);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      {cancelable: true},
+    );
   };
+
   const shareContent = async () => {
     const shareUrl = mediaUrl + singleMedia.filename; // URL of the media
 
@@ -482,6 +503,20 @@ const ListItem = ({
                             <Text style={styles.commentTime}>
                               {formatDate(comment.time_added)}
                             </Text>
+                            {comment.userId === userId && (
+                              <TouchableOpacity
+                                onPress={() =>
+                                  handleDeleteComment(comment.comment_id)
+                                }
+                                style={styles.deleteIconContainer}
+                              >
+                                <FontAwesome
+                                  name="trash"
+                                  size={18}
+                                  color="dimgray"
+                                />
+                              </TouchableOpacity>
+                            )}
                           </View>
                         </View>
                       ))}
@@ -646,6 +681,14 @@ const styles = StyleSheet.create({
     color: 'darkgray',
     marginTop: 4,
     fontSize: 12,
+  },
+  deleteIconContainer: {
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: [{translateY: -9}], // half of the icon size to center it vertically
+    width: 18,
+    height: 18,
   },
   inputContainer: {
     flexDirection: 'row',
