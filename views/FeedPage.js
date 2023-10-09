@@ -9,6 +9,7 @@ const Home = ({navigation}) => {
   console.log('Home');
   const {update} = useContext(MainContext); // Added user here
   const {mediaArray, getFileById} = useMedia(update);
+
   return (
     <>
       <StatusBar
