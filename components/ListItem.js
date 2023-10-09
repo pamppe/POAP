@@ -449,7 +449,12 @@ const ListItem = ({
               <Text>Play Audio</Text>
             </TouchableOpacity>
           )} */}
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() =>
+              navigation.navigate('ViewProfile', {userId: singleMedia.user_id})
+            }
+          >
             <Image
               style={styles.avatar}
               source={avatar.uri ? avatar : avatarImage}

@@ -24,7 +24,7 @@ const useMedia = (update, myFilesOnly) => {
         json.reverse();
       }
       // console.log('userID: ', userId);
-       console.log('Loadmedia json: ', json);
+      console.log('Loadmedia json: ', json);
       const mediaFiles = await Promise.all(
         json.map(async (item) => {
           const fileData = await doFetch(apiUrl + 'media/' + item.file_id);
@@ -42,6 +42,21 @@ const useMedia = (update, myFilesOnly) => {
   useEffect(() => {
     loadMedia(myFilesOnly ? user.user_id : 0);
   }, [update]);
+  const loadUserMedia = async (userId) => {
+    try {
+      const json = await doFetch(apiUrl + 'media/user/' + userId);
+      const mediaFiles = await Promise.all(
+        json.map(async (item) => {
+          const fileData = await doFetch(apiUrl + 'media/' + item.file_id);
+          return fileData;
+        }),
+      );
+      return mediaFiles;
+    } catch (error) {
+      console.error('loadUserMedia failed', error);
+      return [];
+    }
+  };
 
   const postMedia = async (mediaData, token) => {
     setLoading(true);
@@ -104,7 +119,16 @@ const useMedia = (update, myFilesOnly) => {
     }
   };
 
-  return {mediaArray, postMedia, loading, deleteMedia, putMedia, getFileById, loadMedia};
+  return {
+    mediaArray,
+    postMedia,
+    loading,
+    deleteMedia,
+    putMedia,
+    getFileById,
+    loadMedia,
+    loadUserMedia,
+  };
 };
 
 const useAuthentication = () => {
@@ -269,7 +293,7 @@ const useComment = () => {
     return await doFetch(apiUrl + 'comments/' + id, options);
   };
 
-  return {postComment, getCommentsById, deleteComment,};
+  return {postComment, getCommentsById, deleteComment};
 };
 
 export {useMedia, useAuthentication, useUser, useTag, useFavourite, useComment};

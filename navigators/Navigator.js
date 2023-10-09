@@ -8,6 +8,7 @@ import {Icon} from '@rneui/themed';
 import FeedPage from '../views/FeedPage';
 import Upload from '../views/Upload';
 import Profile from '../views/Profile';
+import ViewProfile from '../views/ViewProfile';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -58,6 +59,11 @@ const Stackscreen = () => {
           <Stack.Screen
             name="Tabs"
             component={Tabscreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="ViewProfile"
+            component={ViewProfile}
             options={{headerShown: false}}
           />
         </>
