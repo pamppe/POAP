@@ -24,6 +24,8 @@ const List = ({navigation, mediaArray, getFileById}) => {
   const onRefresh = () => {
     // Scroll to the top
     scrollToTop();
+    // Update the list
+    
 
     // Add any data fetching or other logic here if needed
   };
