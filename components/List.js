@@ -1,4 +1,4 @@
-import {FlatList, Dimensions} from 'react-native';
+import {FlatList, Dimensions, Platform} from 'react-native';
 import ListItem from './ListItem';
 
 import PropTypes from 'prop-types';
@@ -10,13 +10,21 @@ import {useIsFocused, useNavigation} from '@react-navigation/native';
 
 // screen Height
 const ScreenHeight = Dimensions.get('window').height;
+const androidHeight = Dimensions.get('screen').height;
+const softBarHeight = androidHeight - ScreenHeight;
+const androidScreen = ScreenHeight - softBarHeight;
 // screen height recudec by bottom tab bar height
 // const ScreenHeightMinusTabBar = ScreenHeight - height;
 const List = ({navigation, mediaArray, getFileById}) => {
   const {update, user, height, setHeight} = useContext(MainContext); // Added user here
   const flatListRef = useRef(null);
   const tabBarHeight = useBottomTabBarHeight();
+
   console.log('tabBarHeight', tabBarHeight);
+  console.log('screenHeight', ScreenHeight);
+  console.log('androidHeight', androidHeight);
+  console.log('softBarHeight', softBarHeight);
+  console.log('androidScreen', androidScreen);
   // setHeight(tabBarHeight); //kokeile useEffectin sisällä
   const scrollToTop = () => {
     flatListRef.current?.scrollToOffset({offset: 0, animated: true});
@@ -25,7 +33,6 @@ const List = ({navigation, mediaArray, getFileById}) => {
     // Scroll to the top
     scrollToTop();
     // Update the list
-    
 
     // Add any data fetching or other logic here if needed
   };
@@ -74,9 +81,15 @@ const List = ({navigation, mediaArray, getFileById}) => {
           userId={user.user_id} // Passing the logged-in user's ID here
           isPlaying={index === playingIndex}
           setPlayingIndex={setPlayingIndex} // Pass this down to ListItem
+          height={height}
+          softBarHeight={softBarHeight}
         />
       )}
-      snapToInterval={ScreenHeight - height}
+      snapToInterval={
+        Platform.OS === 'android'
+          ? ScreenHeight - softBarHeight + height
+          : ScreenHeight - height
+      }
       snapToAlignment="start"
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}

@@ -14,7 +14,7 @@ import {
   Alert,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   useUser,
@@ -41,6 +41,8 @@ const ListItem = ({
   isPlaying,
   setPlayingIndex,
   navigation,
+  height,
+  softBarHeight,
 }) => {
   const [owner, setOwner] = useState({});
   const {getUserById} = useUser();
@@ -402,7 +404,17 @@ const ListItem = ({
       scrollEventThrottle={16} // this ensures the scroll event is captured smoothly
       ref={scrollViewRef}
     >
-      <View style={styles.mediaContainer}>
+      <View
+        style={[
+          styles.mediaContainer,
+          {
+            height:
+              Platform.OS === 'android'
+                ? Dimensions.get('window').height - softBarHeight + height
+                : Dimensions.get('window').height - height,
+          },
+        ]}
+      >
         {singleMedia.media_type === 'image' ? (
           <Image
             style={[
@@ -594,7 +606,7 @@ const styles = StyleSheet.create({
   mediaContainer: {
     position: 'relative',
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height - 79,
+    //height: Dimensions.get('window').height - ,
   },
   thumbnail: {
     width: '100%',
