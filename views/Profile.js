@@ -23,7 +23,7 @@ import {Video} from 'expo-av';
 
 
 const Profile = ({navigation}) => {
-  const {setIsLoggedIn, user, update, token} = useContext(MainContext);
+  const {setIsLoggedIn, user} = useContext(MainContext);
   const [avatar, setAvatar] = useState(placeholderImage);
   const {postTag, getFilesByTag} = useTag();
   const [modalVisible, setModalVisible] = useState(false);
@@ -136,6 +136,11 @@ const Profile = ({navigation}) => {
     const ext = filename.split('.').pop();
     return ['mp4', 'mov', 'm4v', '3gp', 'avi'].includes(ext);
   };
+  const isAudioFile = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    return ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext);
+  };
+
 
   const handleImageClick = (item) => {
     if (isVideoFile(item.filename)) {
@@ -185,7 +190,7 @@ const Profile = ({navigation}) => {
 
   useEffect(() => {
     setFilteredMediaArray(mediaArray.filter(item =>
-      item.description !== 'avatar'
+      item.description !== 'avatar'&& !isAudioFile(item.filename)
     ));
     setChunkedData(chunkArray([...filteredMediaArray], 3));
   }, [mediaArray]);
