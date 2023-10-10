@@ -141,7 +141,6 @@ const Profile = ({navigation}) => {
     return ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext);
   };
 
-
   const handleImageClick = (item) => {
     if (isVideoFile(item.filename)) {
       // This will be used to differentiate between an image and a video in your modal
