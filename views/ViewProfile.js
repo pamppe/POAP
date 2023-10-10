@@ -18,7 +18,7 @@ import avatarImage from '../assets/avatar.png';
 import {Video, Audio} from 'expo-av';
 import audioImage from '../assets/audio.png';
 
-export default function ViewProfile({route}) {
+export default function ViewProfile({route, navigation}) {
   const {userId} = route.params; // Assuming you're passing 'userId' as a parameter
 
   const {getUserById} = useUser();
@@ -78,9 +78,6 @@ export default function ViewProfile({route}) {
     loadAvatar();
   }, []);
 
-  console.log('userId', userId);
-  console.log('userData', userData);
-  console.log('userMedia', userMedia);
   const determineMediaType = (mimeType) => {
     if (mimeType.startsWith('image/')) {
       return 'image';
@@ -128,7 +125,12 @@ export default function ViewProfile({route}) {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.titleBar}>
-          <Ionicons name="ios-arrow-back" size={24} color="#fff"></Ionicons>
+          <Ionicons
+            name="ios-arrow-back"
+            size={24}
+            color="#fff"
+            onPress={() => navigation.goBack()}
+          ></Ionicons>
           <Ionicons name="ios-add" size={24} color="#fff"></Ionicons>
         </View>
 
