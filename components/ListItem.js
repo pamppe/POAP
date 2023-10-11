@@ -452,7 +452,7 @@ const ListItem = ({
           {descriptionObject.audioId && (
             <View style={styles.musicIconContainer}>
               <FontAwesome name="music" size={18} color="white" />
-              <Text style={styles.musicLabel}>Artist - Original Sound</Text>
+              <Text style={styles.musicLabel}>Artist - Song name</Text>
             </View>
           )}
         </View>

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import {useMedia} from '../hooks/ApiHooks';
 import {MainContext} from '../contexts/MainContext';
 
-const Home = ({navigation}) => {
+const Home = ({navigation, route}) => {
   console.log('Home');
   const {update} = useContext(MainContext); // Added user here
   const {mediaArray, getFileById} = useMedia(update);
