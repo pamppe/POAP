@@ -15,7 +15,7 @@ const softBarHeight = androidHeight - ScreenHeight;
 const androidScreen = ScreenHeight - softBarHeight;
 // screen height recudec by bottom tab bar height
 // const ScreenHeightMinusTabBar = ScreenHeight - height;
-const List = ({navigation, mediaArray, getFileById}) => {
+const List = ({navigation, mediaArray, getFileById, audioName}) => {
   const {update, user, height, setHeight} = useContext(MainContext); // Added user here
   const flatListRef = useRef(null);
   const tabBarHeight = useBottomTabBarHeight();
