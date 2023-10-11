@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {mediaUrl} from '../utils/app-config';
 import React, {useContext, useEffect, useRef, useState} from 'react';
@@ -506,86 +507,81 @@ const ListItem = ({
                 setModalVisible(!modalVisible);
               }}
             >
-              <KeyboardAvoidingView
-                style={{flex: 1}}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
-              >
-                <View style={styles.centeredView}>
-                  <View style={styles.modalView}>
-                    <Text style={styles.commentCount}>
-                      {comments.length} comments
-                    </Text>
-                    <ScrollView style={styles.commentsScrollView}>
-                      {comments.map((comment, index) => (
-                        <View key={index} style={styles.commentItem}>
+              <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+                <KeyboardAvoidingView
+                  style={{flex: 1}}
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+                >
+                  <View style={styles.centeredView}>
+                    <TouchableWithoutFeedback>
+                      <View style={styles.modalView}>
+                        <Text style={styles.commentCount}>
+                          {comments.length} comments
+                        </Text>
+                        <ScrollView style={styles.commentsScrollView}>
+                          {comments.map((comment, index) => (
+                            <View key={index} style={styles.commentItem}>
+                              <Image
+                                style={styles.commentAvatar}
+                                source={comment.avatar}
+                              />
+                              <View style={styles.commentRightContainer}>
+                                <Text style={styles.commentUsername}>
+                                  {comment.username}:
+                                </Text>
+                                <Text style={styles.commentText}>
+                                  {comment.comment}
+                                </Text>
+                                <Text style={styles.commentTime}>
+                                  {formatDate(comment.time_added)}
+                                </Text>
+                                {comment.userId === userId && (
+                                  <TouchableOpacity
+                                    onPress={() =>
+                                      handleDeleteComment(comment.comment_id)
+                                    }
+                                    style={styles.deleteIconContainer}
+                                  >
+                                    <FontAwesome
+                                      name="trash"
+                                      size={18}
+                                      color="dimgray"
+                                    />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            </View>
+                          ))}
+                        </ScrollView>
+                        <View style={styles.inputContainer}>
                           <Image
                             style={styles.commentAvatar}
-                            source={comment.avatar}
+                            source={loggedInUserAvatar}
                           />
-                          <View style={styles.commentRightContainer}>
-                            <Text style={styles.commentUsername}>
-                              {comment.username}:
-                            </Text>
-                            <Text style={styles.commentText}>
-                              {comment.comment}
-                              {/* <Button
-                              title="Delete"
-                              onClick={handleDeleteComment(comment.comment_id)}
-                            ></Button> */}
-                            </Text>
-                            <Text style={styles.commentTime}>
-                              {formatDate(comment.time_added)}
-                            </Text>
-                            {comment.userId === userId && (
-                              <TouchableOpacity
-                                onPress={() =>
-                                  handleDeleteComment(comment.comment_id)
-                                }
-                                style={styles.deleteIconContainer}
-                              >
-                                <FontAwesome
-                                  name="trash"
-                                  size={18}
-                                  color="dimgray"
-                                />
-                              </TouchableOpacity>
-                            )}
-                          </View>
+                          <TextInput
+                            id="commentBox"
+                            placeholder="Add a comment..."
+                            placeholderTextColor="gray"
+                            style={styles.commentInput}
+                            value={userComments}
+                            onChangeText={(text) => setUserComments(text)}
+                          />
+                          <TouchableOpacity onPress={sendComment}>
+                            <FontAwesome name="send" size={24} color="gray" />
+                          </TouchableOpacity>
                         </View>
-                      ))}
-                    </ScrollView>
-                    {/* <View style={styles.bottomDivider} /> */}
-                    <View style={styles.inputContainer}>
-                      <Image
-                        style={styles.commentAvatar}
-                        source={loggedInUserAvatar}
-                      />
-                      <TextInput
-                        id="commentBox"
-                        placeholder="Add a comment..."
-                        style={styles.commentInput}
-                        value={userComments} // set the current value of the TextInput
-                        onChangeText={(text) => setUserComments(text)} // update state when text changes
-                      />
-                      <TouchableOpacity onPress={sendComment}>
-                        <FontAwesome
-                          name="arrow-right"
-                          size={24}
-                          color="gray"
-                        />
-                      </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <FontAwesome name="times" size={24} color="black" />
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.closeButton}
+                          onPress={() => setModalVisible(false)}
+                        >
+                          <FontAwesome name="times" size={24} color="black" />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableWithoutFeedback>
                   </View>
-                </View>
-              </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+              </TouchableWithoutFeedback>
             </Modal>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem} onPress={shareContent}>
@@ -606,7 +602,6 @@ const styles = StyleSheet.create({
   mediaContainer: {
     position: 'relative',
     width: Dimensions.get('window').width,
-    //height: Dimensions.get('window').height - ,
   },
   thumbnail: {
     width: '100%',
