@@ -7,33 +7,40 @@ import {useContext} from 'react';
 import {MainContext} from '../contexts/MainContext';
 import {Card, Input, Button} from '@rneui/themed';
 
+// LoginForm Component for User Authentication
 const LoginForm = () => {
+  // Fetching login function from ApiHooks
   const {postLogin} = useAuthentication();
+
+  // Accessing the application's global state through MainContext
   const {setIsLoggedIn, setUser} = useContext(MainContext);
 
+  // Setting up form controls and validation using react-hook-form
   const {
     control,
     handleSubmit,
-    formState: {errors},
+    formState: {errors}
   } = useForm({
     defaultValues: {
       username: '',
-      password: '',
-    },
+      password: ''
+    }
   });
 
+  // Function to handle user login
   const logIn = async (loginData) => {
     try {
+      // Attempting to log in with provided data
       const loginResponse = await postLogin(loginData);
-      console.log('login response', loginResponse);
-      // TODO: fix dofetch() to display errors from API (e.g. when bad user/pw)
-      // use loginResponse.user for storing token & userdata
+
+      // Storing the received token in AsyncStorage for future authenticated requests
       await AsyncStorage.setItem('userToken', loginResponse.token);
+
+      // Setting the logged-in state and user details in the global context
       setIsLoggedIn(true);
       setUser(loginResponse.user);
     } catch (error) {
       Alert.alert('Error', error.message);
-      // TODO: notify user about failed login?
     }
   };
 
@@ -43,31 +50,31 @@ const LoginForm = () => {
       <Controller
         control={control}
         rules={{
-          required: {value: true, message: 'Username is required'},
+          required: {value: true, message: 'Username is required'}
         }}
         render={({field: {onChange, onBlur, value}}) => (
           <Input
-            placeholder="Username"
+            placeholder='Username'
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
-            autoCapitalize="none"
+            autoCapitalize='none'
             errorMessage={errors.username?.message}
             inputStyle={styles.input}
           />
         )}
-        name="username"
+        name='username'
       />
 
       <Controller
         control={control}
         rules={{
           maxLength: 100,
-          required: {value: true, message: 'Password is required'},
+          required: {value: true, message: 'Password is required'}
         }}
         render={({field: {onChange, onBlur, value}}) => (
           <Input
-            placeholder="password"
+            placeholder='password'
             secureTextEntry
             onBlur={onBlur}
             onChangeText={onChange}
@@ -76,10 +83,10 @@ const LoginForm = () => {
             inputStyle={styles.input}
           />
         )}
-        name="password"
+        name='password'
       />
       <Button
-        title="Submit"
+        title='Submit'
         onPress={handleSubmit(logIn)}
         buttonStyle={styles.button}
       />
@@ -93,28 +100,26 @@ const styles = StyleSheet.create({
     marginTop: 50,
     padding: 20,
     backgroundColor: 'white',
-    borderRadius: 10, // match the card style
-    shadowColor: '#000', // shadow properties
+    borderRadius: 10,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 2
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 5
   },
   buttonText: {
     fontSize: 18,
-    color: 'white',
+    color: 'white'
   },
   button: {
-    height: 50, // Increase button height
+    height: 50,
     backgroundColor: '#FF385C',
-    borderRadius: 10, // border radius to match the button style
-    marginTop: 20, // Increase top margin for spacing
+    borderRadius: 10,
+    marginTop: 20
   },
-  input: {
-    // Adjust input styles as needed
-  },
+  input: {}
 });
 export default LoginForm;

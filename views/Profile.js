@@ -1,4 +1,6 @@
-import {useContext, useState, useEffect} from 'react';
+import {
+  useContext, useState, useEffect
+} from 'react';
 import {MainContext} from '../contexts/MainContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Icon} from '@rneui/themed';
@@ -21,7 +23,6 @@ import {mediaUrl} from '../utils/app-config';
 import {Modal} from 'react-native';
 import {Video} from 'expo-av';
 
-
 const Profile = ({navigation}) => {
   const {setIsLoggedIn, user} = useContext(MainContext);
   const [avatar, setAvatar] = useState(placeholderImage);
@@ -33,6 +34,7 @@ const Profile = ({navigation}) => {
   const [chunkedData, setChunkedData] = useState([]);
   const [refreshFlag, setRefreshFlag] = useState(false);
 
+  // Function for logging out
   const logOut = () => {
     Alert.alert(
       'Confirmation',
@@ -41,7 +43,6 @@ const Profile = ({navigation}) => {
         {
           text: 'Yes',
           onPress: async () => {
-            console.log(setIsLoggedIn);
             try {
               await AsyncStorage.clear();
               setIsLoggedIn(false);
@@ -61,6 +62,7 @@ const Profile = ({navigation}) => {
     );
   };
 
+  // Function for handling avatar upload
   const handleAvatarPress = async () => {
     const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -84,6 +86,8 @@ const Profile = ({navigation}) => {
       await loadAvatar();
     }
   };
+
+  // Upload avatar to server
   const uploadAvatar = async (uri) => {
     const formData = new FormData();
 
@@ -102,8 +106,6 @@ const Profile = ({navigation}) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const response = await postMedia(formData, token);
-      console.log('Server Response:', response);
-      console.log('user from mainContext: ', user);
 
       await postTag(
         {file_id: response.file_id, tag: 'avatar_' + user.user_id},
@@ -119,13 +121,15 @@ const Profile = ({navigation}) => {
     }
     setRefreshFlag(prevFlag => !prevFlag);
   };
+
+  // Load user avatar from server
   const loadAvatar = async () => {
     try {
       const avatars = await getFilesByTag('avatar_' + user.user_id);
       if (avatars.length > 0) {
         setAvatar(mediaUrl + avatars.pop().filename);
       } else {
-        setAvatar('../assets/avatar.png');
+        setAvatar(require('../assets/avatar.png'));
       }
     } catch (error) {
       console.error(error);
@@ -141,28 +145,25 @@ const Profile = ({navigation}) => {
     return ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext);
   };
 
-
+  // Handle media (image or video) click
   const handleImageClick = (item) => {
     if (isVideoFile(item.filename)) {
-      // This will be used to differentiate between an image and a video in your modal
       item.isVideo = true;
     }
     setExpandedImage(item);
   };
 
+  // Delete a media item from server
   const handleDeleteMedia = async (fileId) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const result = await deleteMedia(fileId, token);
       if (result) {
-        // Close the expanded image view after deletion
         setExpandedImage(null);
-        // Reload media to show the updated list without the deleted image
         loadMedia(user.user_id);
       }
     } catch (error) {
-      console.error('Error deleting media:', error);
-      // Handle error, maybe show a toast or alert to the user
+      Alert.alert('Failed to delete media, try again later');
     }
     setRefreshFlag(prevFlag => !prevFlag);
   };
@@ -175,6 +176,7 @@ const Profile = ({navigation}) => {
     return results;
   };
 
+  // Effect to load the avatar and media upon initial render
   useEffect(() => {
     const fetchData = async () => {
       await loadAvatar();
@@ -183,19 +185,22 @@ const Profile = ({navigation}) => {
     fetchData();
   }, []);
 
+  // Effect to refresh avatar and media when needed (controlled by refreshFlag)
   useEffect(() => {
     loadAvatar();
     loadMedia(user.user_id);
   }, [refreshFlag]);
 
+  // Effect to filter out avatars and audios and chunk the filtered media
   useEffect(() => {
     setFilteredMediaArray(mediaArray.filter(item =>
-      item.description !== 'avatar'&& !isAudioFile(item.filename)
+      item.description !== 'avatar' && !isAudioFile(item.filename)
     ));
     setChunkedData(chunkArray([...filteredMediaArray], 3));
   }, [mediaArray]);
 
   return (
+    // ... the component's JSX content ...
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{flex: 1}}
@@ -219,9 +224,9 @@ const Profile = ({navigation}) => {
             <Image
               source={{uri: avatar}}
               style={{
-                width: 115,
-                height: 115,
-                borderRadius: 50,
+                width: 105,
+                height: 105,
+                borderRadius: 100,
                 alignSelf: 'center'
               }}
             />
@@ -315,7 +320,7 @@ const Profile = ({navigation}) => {
                         rate={1.0}
                         volume={1.0}
                         isMuted={false}
-                        resizeMode='cover' // or 'contain' based on your preference
+                        resizeMode='cover'
                         shouldPlay={false}
                         style={{width: '100%', aspectRatio: 1}}
                       />
@@ -370,7 +375,7 @@ const Profile = ({navigation}) => {
                   isMuted={false}
                   resizeMode='contain'
                   shouldPlay
-                  useNativeControls // Allow user to control video playback
+                  useNativeControls
                   style={{
                     width: '80%',
                     height: '90%'
