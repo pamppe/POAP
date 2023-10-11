@@ -3,13 +3,18 @@ import {useUser} from '../hooks/ApiHooks';
 import {useContext} from 'react';
 import {MainContext} from '../contexts/MainContext';
 import {Card, Input, Button} from '@rneui/themed';
-import {Alert, StyleSheet} from 'react-native';
+import { Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView  } from 'react-native';
 import {PropTypes} from 'prop-types';
 
+// RegisterForm Component for User Registration
 const RegisterForm = ({setToggleRegister}) => {
+  // Fetch user related functions from ApiHooks
   const {postUser, checkUsername} = useUser();
+
+  // Fetching user-related state methods from MainContext
   const {setIsLoggedIn, setUser} = useContext(MainContext);
 
+  // Setting up form controls and validation using react-hook-form
   const {
     control,
     handleSubmit,
@@ -25,18 +30,24 @@ const RegisterForm = ({setToggleRegister}) => {
     mode: 'onBlur',
   });
 
+  // Function to handle user registration
   const register = async (userData) => {
     try {
+      // Removing the confirm_password field as we don't need it for registration API
       delete userData.confirm_password;
+
+      // Making API call to register the user
       const registerResponse = await postUser(userData);
-      console.log('postUser response', registerResponse);
       Alert.alert('Success', registerResponse.message);
+      // Switching back to login form after successful registration
       setToggleRegister(false);
     } catch (error) {
       Alert.alert('Error', error.message);
     }
   };
   return (
+
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
     <Card containerStyle={styles.card}>
       <Card.Title>Register</Card.Title>
       <Controller
@@ -47,10 +58,9 @@ const RegisterForm = ({setToggleRegister}) => {
           validate: async (value) => {
             try {
               const isAvailable = await checkUsername(value);
-              console.log('username available?', value);
               return isAvailable ? isAvailable : 'Username taken';
             } catch (error) {
-              console.error(error);
+              Alert.alert('Username is taken')
             }
           },
         }}
@@ -115,7 +125,6 @@ const RegisterForm = ({setToggleRegister}) => {
         rules={{
           required: {value: true, message: 'email is required'},
           pattern: {
-            // TODO: add better regex for email
             value: /\S+@\S+\.\S+$/,
             message: 'must be valid email',
           },
@@ -157,6 +166,7 @@ const RegisterForm = ({setToggleRegister}) => {
         buttonStyle={styles.button}
       />
     </Card>
+      </ScrollView>
   );
 };
 
@@ -166,8 +176,8 @@ const styles = StyleSheet.create({
     marginTop: 50,
     padding: 20,
     backgroundColor: 'white',
-    borderRadius: 10, // match the card style
-    shadowColor: '#000', // shadow properties
+    borderRadius: 10,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -181,13 +191,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   button: {
-    height: 50, // Increase button height
+    height: 50,
     backgroundColor: '#FF385C',
-    borderRadius: 10, // border radius to match the button style
-    marginTop: 20, // Increase top margin for spacing
+    borderRadius: 10,
+    marginTop: 20,
   },
   input: {
-    // Adjust input styles as needed
+
   },
 });
 

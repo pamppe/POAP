@@ -1,4 +1,6 @@
-import {useContext, useState, useEffect} from 'react';
+import {
+  useContext, useState, useEffect
+} from 'react';
 import {MainContext} from '../contexts/MainContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Icon} from '@rneui/themed';
@@ -10,7 +12,7 @@ import {
   Text,
   Platform,
   KeyboardAvoidingView,
-  Alert,
+  Alert
 } from 'react-native';
 import PropTypes from 'prop-types';
 import {useTag, useMedia} from '../hooks/ApiHooks';
@@ -32,6 +34,7 @@ const Profile = ({navigation}) => {
   const [chunkedData, setChunkedData] = useState([]);
   const [refreshFlag, setRefreshFlag] = useState(false);
 
+  // Function for logging out
   const logOut = () => {
     Alert.alert(
       'Confirmation',
@@ -40,31 +43,32 @@ const Profile = ({navigation}) => {
         {
           text: 'Yes',
           onPress: async () => {
-            console.log(setIsLoggedIn);
             try {
               await AsyncStorage.clear();
               setIsLoggedIn(false);
             } catch (error) {
               console.error(error);
             }
-          },
+          }
         },
         {
           text: 'Cancel',
-          onPress: () => {},
-          style: 'cancel',
-        },
+          onPress: () => {
+          },
+          style: 'cancel'
+        }
       ],
-      {cancelable: false},
+      {cancelable: false}
     );
   };
 
+  // Function for handling avatar upload
   const handleAvatarPress = async () => {
     const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         'Sorry',
-        'We need camera roll permissions to make this work!',
+        'We need camera roll permissions to make this work!'
       );
       return;
     }
@@ -72,7 +76,7 @@ const Profile = ({navigation}) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.1,
+      quality: 0.1
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -82,6 +86,8 @@ const Profile = ({navigation}) => {
       await loadAvatar();
     }
   };
+
+  // Upload avatar to server
   const uploadAvatar = async (uri) => {
     const formData = new FormData();
 
@@ -92,7 +98,7 @@ const Profile = ({navigation}) => {
     formData.append('file', {
       uri: uri,
       name: filename,
-      type: `image/${fileExtension}`,
+      type: `image/${fileExtension}`
     });
 
     formData.append('description', 'avatar');
@@ -100,30 +106,30 @@ const Profile = ({navigation}) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const response = await postMedia(formData, token);
-      console.log('Server Response:', response);
-      console.log('user from mainContext: ', user);
 
       await postTag(
         {file_id: response.file_id, tag: 'avatar_' + user.user_id},
-        token,
+        token
       );
       Alert.alert('Avatar uploaded successfully!');
     } catch (error) {
       console.error('Error uploading avatar:', error);
       Alert.alert(
         'Upload error',
-        'There was an error uploading the avatar. Please try again later.',
+        'There was an error uploading the avatar. Please try again later.'
       );
     }
-    setRefreshFlag((prevFlag) => !prevFlag);
+    setRefreshFlag(prevFlag => !prevFlag);
   };
+
+  // Load user avatar from server
   const loadAvatar = async () => {
     try {
       const avatars = await getFilesByTag('avatar_' + user.user_id);
       if (avatars.length > 0) {
         setAvatar(mediaUrl + avatars.pop().filename);
       } else {
-        setAvatar('../assets/avatar.png');
+        setAvatar(require('../assets/avatar.png'));
       }
     } catch (error) {
       console.error(error);
@@ -139,29 +145,27 @@ const Profile = ({navigation}) => {
     return ['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext);
   };
 
+  // Handle media (image or video) click
   const handleImageClick = (item) => {
     if (isVideoFile(item.filename)) {
-      // This will be used to differentiate between an image and a video in your modal
       item.isVideo = true;
     }
     setExpandedImage(item);
   };
 
+  // Delete a media item from server
   const handleDeleteMedia = async (fileId) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       const result = await deleteMedia(fileId, token);
       if (result) {
-        // Close the expanded image view after deletion
         setExpandedImage(null);
-        // Reload media to show the updated list without the deleted image
         loadMedia(user.user_id);
       }
     } catch (error) {
-      console.error('Error deleting media:', error);
-      // Handle error, maybe show a toast or alert to the user
+      Alert.alert('Failed to delete media, try again later');
     }
-    setRefreshFlag((prevFlag) => !prevFlag);
+    setRefreshFlag(prevFlag => !prevFlag);
   };
 
   const chunkArray = (array, chunkSize) => {
@@ -172,6 +176,7 @@ const Profile = ({navigation}) => {
     return results;
   };
 
+  // Effect to load the avatar and media upon initial render
   useEffect(() => {
     const fetchData = async () => {
       await loadAvatar();
@@ -180,50 +185,49 @@ const Profile = ({navigation}) => {
     fetchData();
   }, []);
 
+  // Effect to refresh avatar and media when needed (controlled by refreshFlag)
   useEffect(() => {
     loadAvatar();
     loadMedia(user.user_id);
   }, [refreshFlag]);
 
+  // Effect to filter out avatars and audios and chunk the filtered media
   useEffect(() => {
-    setFilteredMediaArray(
-      mediaArray.filter(
-        (item) => item.description !== 'avatar' && !isAudioFile(item.filename),
-      ),
-    );
+    setFilteredMediaArray(mediaArray.filter(item =>
+      item.description !== 'avatar' && !isAudioFile(item.filename)
+    ));
     setChunkedData(chunkArray([...filteredMediaArray], 3));
   }, [mediaArray]);
 
   return (
+    // ... the component's JSX content ...
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{flex: 1}}
     >
       <ScrollView
         style={{backgroundColor: 'black', flexGrow: 1, paddingTop: 25}}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            marginTop: 40,
-            paddingRight: 20,
-          }}
-        >
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          marginTop: 40,
+          paddingRight: 20
+        }}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Icon name="settings" color="white" />
+            <Icon name='settings' color='white' />
           </TouchableOpacity>
-        </View>
+        </ View>
         <View style>
           <TouchableOpacity onPress={handleAvatarPress}>
             <Image
               source={{uri: avatar}}
               style={{
-                width: 115,
-                height: 115,
-                borderRadius: 50,
-                alignSelf: 'center',
+                width: 105,
+                height: 105,
+                borderRadius: 100,
+                alignSelf: 'center'
               }}
             />
           </TouchableOpacity>
@@ -234,23 +238,21 @@ const Profile = ({navigation}) => {
             fontWeight: 'bold',
             marginTop: 10,
             color: 'white',
-            alignSelf: 'center',
+            alignSelf: 'center'
           }}
         >
           {user.username}
         </Text>
-        <Text
-          style={{
-            fontSize: 16,
-            color: 'white',
-            marginBottom: 10,
-            alignSelf: 'center',
-          }}
-        >
+        <Text style={{
+          fontSize: 16,
+          color: 'white',
+          marginBottom: 10,
+          alignSelf: 'center'
+        }}>
           {user.full_name}
         </Text>
         <Modal
-          animationType="slide"
+          animationType='slide'
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => {
@@ -262,20 +264,18 @@ const Profile = ({navigation}) => {
               flex: 1,
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)'
             }}
             activeOpacity={1}
             onPress={() => setModalVisible(false)}
           >
-            <View
-              style={{
-                width: '90%',
-                maxHeight: '80%',
-                backgroundColor: 'black',
-                padding: 20,
-                borderRadius: 10,
-              }}
-            >
+            <View style={{
+              width: '90%',
+              maxHeight: '80%',
+              backgroundColor: 'black',
+              padding: 20,
+              borderRadius: 10
+            }}>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Text style={{color: 'white'}}>X</Text>
               </TouchableOpacity>
@@ -288,7 +288,7 @@ const Profile = ({navigation}) => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginTop: 10,
+                  marginTop: 10
                 }}
                 onPress={logOut}
               >
@@ -297,22 +297,20 @@ const Profile = ({navigation}) => {
                     color: 'white',
                     fontSize: 16,
                     fontWeight: 'bold',
-                    marginRight: 10,
+                    marginRight: 10
                   }}
                 >
                   Log out!
                 </Text>
-                <Icon name="logout" color="white" />
+                <Icon name='logout' color='white' />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         </Modal>
         <View style={{flex: 1}}>
           {chunkedData.map((row, rowIndex) => (
-            <View
-              key={rowIndex}
-              style={{flexDirection: 'row', justifyContent: 'flex-start'}}
-            >
+            <View key={rowIndex}
+                  style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
               {row.map((item) => (
                 <View key={item.file_id} style={{width: '33.33%', padding: 5}}>
                   <TouchableOpacity onPress={() => handleImageClick(item)}>
@@ -322,7 +320,7 @@ const Profile = ({navigation}) => {
                         rate={1.0}
                         volume={1.0}
                         isMuted={false}
-                        resizeMode="cover" // or 'contain' based on your preference
+                        resizeMode='cover'
                         shouldPlay={false}
                         style={{width: '100%', aspectRatio: 1}}
                       />
@@ -339,32 +337,25 @@ const Profile = ({navigation}) => {
           ))}
         </View>
         <Modal
-          animationType="slide"
+          animationType='slide'
           transparent={true}
           visible={!!expandedImage}
           onRequestClose={() => setExpandedImage(null)}
         >
-          <View
-            style={{
-              flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            }}
-          >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+          }}>
             <View
-              style={{width: '90%', maxHeight: '80%', alignItems: 'center'}}
-            >
+              style={{width: '90%', maxHeight: '80%', alignItems: 'center'}}>
               <TouchableOpacity onPress={() => setExpandedImage(null)}>
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 24,
-                    alignSelf: 'flex-end',
-                  }}
-                >
-                  X
-                </Text>
+                <Text style={{
+                  color: 'white',
+                  fontSize: 24,
+                  alignSelf: 'flex-end'
+                }}>X</Text>
               </TouchableOpacity>
               {expandedImage && !expandedImage.isVideo && (
                 <Image
@@ -372,7 +363,7 @@ const Profile = ({navigation}) => {
                   style={{
                     width: '90%',
                     height: '60%',
-                    resizeMode: 'contain',
+                    resizeMode: 'contain'
                   }}
                 />
               )}
@@ -382,12 +373,12 @@ const Profile = ({navigation}) => {
                   rate={1.0}
                   volume={1.0}
                   isMuted={false}
-                  resizeMode="contain"
+                  resizeMode='contain'
                   shouldPlay
-                  useNativeControls // Allow user to control video playback
+                  useNativeControls
                   style={{
                     width: '80%',
-                    height: '90%',
+                    height: '90%'
                   }}
                 />
               )}
@@ -396,7 +387,7 @@ const Profile = ({navigation}) => {
                   marginTop: 20,
                   backgroundColor: '#FF385C',
                   padding: 10,
-                  borderRadius: 5,
+                  borderRadius: 5
                 }}
                 onPress={() => handleDeleteMedia(expandedImage.file_id)}
               >
@@ -411,7 +402,7 @@ const Profile = ({navigation}) => {
 };
 
 Profile.propTypes = {
-  navigation: PropTypes.object,
+  navigation: PropTypes.object
 };
 
 export default Profile;
