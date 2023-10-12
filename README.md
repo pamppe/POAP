@@ -6,12 +6,12 @@ First React Native school project done by Kim Rautiainen, Eemil Lehtonen and Pet
 
 ## Screenshots
 
-![screenshot1](https://github.com/pamppe/ReactProject/assets/103430042/01256bb6-7830-45da-9f00-8b02517f9b29)
+<img src="https://github.com/pamppe/ReactProject/assets/103430042/01256bb6-7830-45da-9f00-8b02517f9b29" width="400" height="790">
 
-![screenshot2](https://github.com/pamppe/ReactProject/assets/103430042/03967fea-7a7d-4394-9aff-376c28a5e726)
+<img src="https://github.com/pamppe/ReactProject/assets/103430042/03967fea-7a7d-4394-9aff-376c28a5e726" width="400" height="790">
 
-![screenshot3](https://github.com/pamppe/ReactProject/assets/103430042/9fb8fefc-ddb6-4fbe-b9e9-02bd8ce8da4e)
+<img src="https://github.com/pamppe/ReactProject/assets/103430042/9fb8fefc-ddb6-4fbe-b9e9-02bd8ce8da4e" width="400" height="790">
 
-![screenshot4](https://github.com/pamppe/ReactProject/assets/103430042/4c4fb0e2-375c-4c8c-b7e2-e48c5f4d0cc7)
+<img src="https://github.com/pamppe/ReactProject/assets/103430042/4c4fb0e2-375c-4c8c-b7e2-e48c5f4d0cc7" width="400" height="790">
 
 
