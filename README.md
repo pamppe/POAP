@@ -1,7 +1,7 @@
 
 # POAP
 
-First React Native school project done by Kim Rautiainen, Eemil Lehtonen and Petteri Helttula. POAP is a socialmedia app that is inspired by tiktok. It allow users to swipe through videos and images of other users and has many features including liking, commenting and adding own audio files on top of videos and images you upload.
+First React Native school project done by Kim Rautiainen, Emil Lehtonen and Petteri Helttula. POAP is a socialmedia app that is inspired by tiktok. It allow users to swipe through videos and images of other users and has many features including liking, commenting and adding own audio files on top of videos and images you upload.
 
 
 ## Screenshots
