@@ -5,7 +5,7 @@ First React Native school project done by Kim Rautiainen, Emil Lehtonen and Pett
 
 ## Video
 <video width="320" height="240" controls>
-  <source src="https://github.com/KimRautiainen/POAP/blob/master/demo" type="video/mp4">
+  <source src="./demo" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
